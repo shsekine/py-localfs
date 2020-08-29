@@ -133,3 +133,6 @@ dmypy.json
 /.settings
 /.idea/
 /.vscode/
+
+/artifacts/
+/logs/
