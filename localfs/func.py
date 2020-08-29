@@ -1,7 +1,9 @@
 # -*- conding:utf-8 -*-
 
 import glob
+import grp
 import os
+import pwd
 import re
 import shutil
 import stat as st_stat
@@ -78,6 +80,22 @@ def to_perm(st_mode: int) -> str:
     return res
 
 
+#
+def to_user(uid: int) -> str:
+    try:
+        return pwd.getpwuid(uid).pw_name
+    except Exception:
+        return str(uid)
+
+
+#
+def to_group(gid: int) -> str:
+    try:
+        return grp.getgrgid(gid).gr_name
+    except Exception:
+        return str(gid)
+
+
 # stat
 def stat(path: str) -> os.stat_result:
     return os.stat(path)
@@ -110,13 +128,15 @@ def grep():
 
 
 # cp
-def cp(source: str, dest: str) -> bool:
-    pass
+def cp(src: str, dst: str) -> bool:
+    shutil.copytree(src, dst)
+    return True
 
 
 # mv
-def mv(source: str, dest: str) -> bool:
-    pass
+def mv(src: str, dst: str) -> bool:
+    shutil.move(src, dst)
+    return True
 
 
 # mkdir

@@ -89,13 +89,14 @@ def test_chown():
     func.mkdir(DIR2)
     func.touch(FILE1)
     stat = func.stat(FILE1)
-    assert func.to_perm(stat.st_mode) == '644'
-    func.chmod(DIR2, '777', '-R')
+    user = func.to_user(stat.st_uid)
+    assert func.to_user(stat.st_uid) == user
+    func.chown(DIR2, user=user, opt='-R')
     stat = func.stat(DIR2)
-    assert func.to_perm(stat.st_mode) == '777'
+    assert func.to_user(stat.st_uid) == user
     stat = func.stat(FILE1)
-    assert func.to_perm(stat.st_mode) == '777'
-    func.chmod(FILE1, '644')
+    assert func.to_user(stat.st_uid) == user
+    func.chown(FILE1, user=user)
     stat = func.stat(FILE1)
-    assert func.to_perm(stat.st_mode) == '644'
+    assert func.to_user(stat.st_uid) == user
     func.rm(DIR2, '-fr')
