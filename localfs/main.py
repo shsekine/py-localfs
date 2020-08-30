@@ -1,45 +1,59 @@
 # -*- conding:utf-8 -*-
 
-import argparse
+import sys
 from localfs import func
+from typing import List, Dict, Any
+
+
+MAIN_USAGE = 'pylocalfs <subcmd> [subopt] [subarg ...]'
+SUB_USAGE = {
+    'ls': 'pylocalfs -ls [-@altr%] [file ...]'
+}
+
+
+# parse_argv
+def parse_argv(argv: List[str]) -> Dict[str, Any]:
+    if len(argv) <= 2:
+        return None
+    script = argv.pop(0)
+    subcmd = argv.pop(0).replace('-', '')
+    if subcmd not in SUB_USAGE.keys():
+        return None
+    opt = []
+    args = []
+    for arg in argv:
+        if arg.startswith('-'):
+            opt.append(arg.replace('-', ''))
+        else:
+            args.append(arg)
+    return {
+        'script': script,
+        'subcmd': subcmd,
+        'opt': opt,
+        'args': args
+    }
 
 
 # ls
-def ls(args: object):
+def ls(args: List[str], opt: List[str]):
     rc = 0
-    files = []
-    if args.opt is not None:
-        if args.opt.startswith('-'):
-           opt = args.opt
-        else:
-           opt = ''
-
-
-    for tp in args.file:
-        paths = func.ls(tp)
+    optprm = '-{}'.format(''.join(opt))
+    for tgt in args:
+        paths = func.ls(tgt, optprm)
         for p in paths:
             print(p)
     return rc
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Python local filesystem access library')
-    subparsers = parser.add_subparsers()
-    subparsers.required = True
-
-    ls_parser = subparsers.add_parser('ls', help='ls')
-    ls_parser.add_argument('opt', nargs='?')
-    ls_parser.add_argument('file', nargs='*')
-    ls_parser.set_defaults(func=ls)
-
-    args = parser.parse_args()
-
-    try:
-        ret = args.func(args)
-        exit(ret)
-    except Exception as e:
-        print(e)
-        exit(1)
+    args = parse_argv(sys.argv)
+    if args is None:
+        print(MAIN_USAGE, file=sys.stderr)
+        sys.exit(1)
+    rc = 0
+    if args['subcmd'] == 'ls':
+        rc = ls(args['args'], args['opt'])
+    sys.exit(rc)
 
 
 if __name__ == "__main__":

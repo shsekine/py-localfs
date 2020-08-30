@@ -15,27 +15,6 @@ GLOB_PATTERN = re.compile(r'^.*[*?].*$')
 
 
 #
-def analyze_path(path: str) -> Dict[str, Any]:
-    tokens = os.path.split(path)
-    base = []
-    sub = []
-    is_glob = False
-    for t in tokens:
-        if GLOB_PATTERN.match(t):
-            is_glob = True
-        if is_glob:
-            sub.append(t)
-        else:
-            base.append(t)
-    return {
-        'path': path,
-        'is_glob': is_glob,
-        'base': os.path.sep.join(base),
-        'sub': os.path.sep.join(sub)
-    }
-
-
-#
 def rwx(n: int, suid: int, sticky: bool = False) -> str:
     if suid > 0:
         suid = 2
@@ -98,13 +77,14 @@ def to_group(gid: int) -> str:
 
 # stat
 def stat(path: str) -> os.stat_result:
+    path = str(path)
     return os.stat(path)
 
 
 # ls
-def ls(path: str) -> List[Path]:
-    info = analyze_path(path)
-    if info['is_glob']:
+def ls(path: str, opt: str = '') -> List[Path]:
+    path = str(path)
+    if GLOB_PATTERN.match(path):
         paths = glob.glob(path)
     elif os.path.isdir(path):
         paths = os.listdir(path)
@@ -112,13 +92,23 @@ def ls(path: str) -> List[Path]:
         paths = [path]
     else:
         raise FileNotFoundError('{}: No such file or directory'.format(path))
-    return paths
+    res = []
+    for p in paths:
+        if opt.find('a') < 0 and p.startswith('.'):
+            continue
+        path_p = Path(p)
+        res.append(path_p)
+    return res
 
 
 # find
-def find(path: str, name: str = '*') -> List[str]:
-    res = glob.glob(path)
-    res.extend(glob.glob(os.path.join(path, '**', name), recursive=True))
+def find(path: str, name: str = '*') -> List[Path]:
+    path = str(path)
+    paths = glob.glob(path)
+    paths.extend(glob.glob(os.path.join(path, '**', name), recursive=True))
+    res = []
+    for p in paths:
+        res.append(Path(p))
     return res
 
 
@@ -129,18 +119,19 @@ def grep():
 
 # cp
 def cp(src: str, dst: str) -> bool:
-    shutil.copytree(src, dst)
+    shutil.copytree(str(src), str(dst))
     return True
 
 
 # mv
 def mv(src: str, dst: str) -> bool:
-    shutil.move(src, dst)
+    shutil.move(str(src), str(dst))
     return True
 
 
 # mkdir
 def mkdir(path: str, mode: str = '755', opt: str = '') -> bool:
+    path = str(path)
     if opt.find('p') >= 0:
         os.makedirs(path, mode=int(mode, 8), exist_ok=True)
     else:
@@ -156,6 +147,7 @@ def touch(path: str, mode: str = '644') -> bool:
 
 # rm
 def rm(path: str, opt: str = '') -> bool:
+    path = str(path)
     if opt.find('f') >= 0 and not os.path.exists(path):
         return True
     if os.path.isdir(path) and opt.find('r') >= 0:
@@ -167,21 +159,24 @@ def rm(path: str, opt: str = '') -> bool:
 
 # rmdir
 def rmdir(path: str) -> bool:
+    path = str(path)
     os.rmdir(path)
     return True
 
 
 # chmod
 def chmod(path: str, mode: str, opt: str = '') -> bool:
+    path = str(path)
     paths = find(path) if opt.find('R') >= 0 else [path]
     for p in paths:
-        os.chmod(p, int(mode, 8))
+        os.chmod(str(p), int(mode, 8))
     return True
 
 
 # chown
 def chown(path: str, user: str = None, group: str = None, opt: str = '') -> bool:
+    path = str(path)
     paths = find(path) if opt.find('R') >= 0 else [path]
     for p in paths:
-        shutil.chown(p, user, group)
+        shutil.chown(str(p), user, group)
     return True
