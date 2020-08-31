@@ -18,8 +18,8 @@ def scope_session():
 
 def test_stat():
     stat = func.stat('README.md')
-    print(stat)
     assert stat is not None
+    assert func.to_perm(stat.st_mode) == '644'
 
 
 def test_ls():
@@ -27,6 +27,11 @@ def test_ls():
     assert len(paths) == 2
     paths = func.ls('tests/dir1')
     assert len(paths) == 2
+    paths = func.ls('tests/dir*', '-l')
+    print(paths)
+    fpaths = func.format_long(paths)
+    for p in fpaths:
+        print(p)
 
 
 def test_find():
@@ -34,6 +39,8 @@ def test_find():
     assert len(paths) == 4
     paths = func.find('tests/dir1')
     assert len(paths) == 4
+    for p in paths:
+        func.abspath(p)
 
 
 def test_mkdir():

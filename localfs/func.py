@@ -1,12 +1,15 @@
 # -*- conding:utf-8 -*-
 
+import fnmatch
 import glob
 import grp
 import os
 import pwd
 import re
 import shutil
+import time
 import stat as st_stat
+from operator import itemgetter
 from pathlib import Path
 from typing import List, Dict, Any
 
@@ -50,6 +53,7 @@ def to_rwx(st_mode: int) -> str:
     res += rwx((st_mode & 0o7), st_mode & st_stat.S_ISVTX)
     return res
 
+
 #
 def to_perm(st_mode: int) -> str:
     res = ''
@@ -75,6 +79,87 @@ def to_group(gid: int) -> str:
         return str(gid)
 
 
+#
+def to_date_format(mtime: int) -> str:
+    if mtime is not None and mtime != int(0xffffffff):
+        if abs(time.time() - mtime) > 1552000:
+            return time.strftime('%d %b %Y', time.localtime(mtime))
+        else:
+            return time.strftime('%d %b %H:%M', time.localtime(mtime))
+    else:
+        return '(unknown date)'
+
+
+#
+def format_short(paths: List[Dict[str, Any]]) -> List[str]:
+    res = []
+    for p in paths:
+        dat = [
+            p['path']
+        ]
+        res.append(' '.join(dat))
+    return res
+
+
+#
+def format_long(paths: List[Dict[str, Any]]) -> List[str]:
+    res = []
+    max_usr_len = 4
+    max_grp_len = 4
+    max_siz_len = 4
+    for p in paths:
+        max_usr_len = max(len(p['user']), max_usr_len)
+        max_grp_len = max(len(p['group']), max_grp_len)
+        max_siz_len = max(len(p['size']), max_siz_len)
+    for p in paths:
+        dat = [
+            p['mode'],
+            p['nlink'],
+            p['user'].ljust(max_usr_len),
+            p['group'].ljust(max_grp_len),
+            p['size'].rjust(max_siz_len),
+            p['date'],
+            p['path']
+        ]
+        res.append(' '.join(dat))
+    return res
+
+
+#
+def ls_optproc(paths: List[str], opt: str = '', relbase: str = None) -> List[Dict[str, Any]]:
+    res = []
+    for p in paths:
+        if opt.find('a') < 0 and p.startswith('.'):
+            continue
+        relpath = p if relbase is None else os.path.join(relbase, p)
+        dat = {'path': p, 'relpath': relpath}
+        if opt.find('l') >= 0:
+            stat = os.stat(relpath)
+            dat['stat'] = stat
+            dat['mode'] = to_rwx(stat.st_mode)
+            dat['nlink'] = str(stat.st_nlink)
+            dat['user'] = to_user(stat.st_uid)
+            dat['group'] = to_group(stat.st_gid)
+            dat['size'] = str(stat.st_size)
+            dat['date'] = to_date_format(stat.st_mtime)
+            dat['mtime'] = stat.st_mtime
+        res.append(dat)
+    if opt.find('t') >= 0:
+        key = 'mtime'
+        rev = opt.find('r') < 0
+    else:
+        key = 'path'
+        rev = opt.find('r') >= 0
+    res = sorted(res, key=itemgetter(key), reverse=rev)
+    return res
+
+
+#
+def abspath(path: str) -> str:
+    path = str(path)
+    return os.path.abspath(path)
+
+
 # stat
 def stat(path: str) -> os.stat_result:
     path = str(path)
@@ -82,39 +167,29 @@ def stat(path: str) -> os.stat_result:
 
 
 # ls
-def ls(path: str, opt: str = '') -> List[Path]:
+def ls(path: str, opt: str = '') -> List[Dict[str, Any]]:
     path = str(path)
     if GLOB_PATTERN.match(path):
         paths = glob.glob(path)
+        return ls_optproc(paths, opt)
     elif os.path.isdir(path):
         paths = os.listdir(path)
+        return ls_optproc(paths, opt, path)
     elif os.path.isfile(path):
         paths = [path]
+        return ls_optproc(paths, opt)
     else:
         raise FileNotFoundError('{}: No such file or directory'.format(path))
-    res = []
-    for p in paths:
-        if opt.find('a') < 0 and p.startswith('.'):
-            continue
-        path_p = Path(p)
-        res.append(path_p)
-    return res
 
 
 # find
-def find(path: str, name: str = '*') -> List[Path]:
+def find(path: str, name: str = '*') -> List[str]:
     path = str(path)
-    paths = glob.glob(path)
+    paths = []
+    if fnmatch.fnmatch(path, name):
+        paths.extend(glob.glob(path))
     paths.extend(glob.glob(os.path.join(path, '**', name), recursive=True))
-    res = []
-    for p in paths:
-        res.append(Path(p))
-    return res
-
-
-# grep
-def grep():
-    pass
+    return paths
 
 
 # cp
@@ -180,3 +255,33 @@ def chown(path: str, user: str = None, group: str = None, opt: str = '') -> bool
     for p in paths:
         shutil.chown(str(p), user, group)
     return True
+
+
+# du
+def du():
+    pass
+
+
+# cat
+def cat():
+    pass
+
+
+# zcat
+def zcat():
+    pass
+
+
+# gzip
+def gzip():
+    pass
+
+
+# grep
+def grep():
+    pass
+
+
+# sed
+def sed():
+    pass
