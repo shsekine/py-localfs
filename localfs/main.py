@@ -14,21 +14,14 @@ def ls(args: object):
     opt += 'l' if args.l else ''
     opt += 'r' if args.r else ''
     opt += 't' if args.t else ''
-    multi = len(args.file) > 0
     for af in args.file:
         paths = func.ls(af, opt)
         if args.l:
             dsps = func.format_long(paths)
         else:
             dsps = func.format_short(paths)
-        if multi:
-            print('{}:'.format(af))
-            for d in dsps:
-                print(d)
-            print('')
-        else:
-            for d in dsps:
-                print(d)
+        for d in dsps:
+            print(d)
     return rc
 
 
@@ -38,6 +31,63 @@ def find(args: object):
     paths = func.find(args.path, args.name)
     for p in paths:
         print(p)
+    return rc
+
+
+# cp
+def cp(args: object):
+    rc = 0
+    paths = func.find(args.path, args.name)
+    for p in paths:
+        print(p)
+    return rc
+
+
+# mv
+def mv(args: object):
+    rc = 0
+    paths = func.find(args.path, args.name)
+    for p in paths:
+        print(p)
+    return rc
+
+
+# mkdir
+def mkdir(args: object):
+    rc = 0
+    opt = ''
+    opt += 'p' if args.p else ''
+    func.mkdir(args.path, args.mode, opt)
+    return rc
+
+
+# touch
+def touch(args: object):
+    rc = 0
+    return rc
+
+
+# rm
+def rm(args: object):
+    rc = 0
+    return rc
+
+
+# rmdir
+def rmdir(args: object):
+    rc = 0
+    return rc
+
+
+# chmod
+def chmod(args: object):
+    rc = 0
+    return rc
+
+
+# chown
+def chown(args: object):
+    rc = 0
     return rc
 
 
@@ -59,8 +109,49 @@ def main():
     find_parser.add_argument('path')
     find_parser.set_defaults(func=find)
 
+    cp_parser = subparsers.add_parser('cp', help='cp')
+    cp_parser.add_argument('-p', action='store_true')
+    cp_parser.add_argument('-r', action='store_true')
+    cp_parser.add_argument('source', nargs='*', default=['.'])
+    cp_parser.add_argument('target')
+    cp_parser.set_defaults(func=cp)
+
+    mv_parser = subparsers.add_parser('mv', help='mv')
+    mv_parser.add_argument('source', nargs='*', default=['.'])
+    mv_parser.add_argument('target')
+    mv_parser.set_defaults(func=mv)
+
+    mkdir_parser = subparsers.add_parser('mkdir', help='mkdir')
+    mkdir_parser.add_argument('-p', action='store_true')
+    mkdir_parser.add_argument('-m', '--mode')
+    mkdir_parser.add_argument('directory')
+    mkdir_parser.set_defaults(func=mkdir)
+
+    touch_parser = subparsers.add_parser('touch', help='touch')
+    touch_parser.add_argument('file')
+    touch_parser.set_defaults(func=touch)
+
+    rm_parser = subparsers.add_parser('rm', help='rm')
+    rm_parser.add_argument('-f', action='store_true')
+    rm_parser.add_argument('-r', action='store_true')
+    rm_parser.add_argument('file', nargs='+', default=['.'])
+    rm_parser.set_defaults(func=rm)
+
+    rmdir_parser = subparsers.add_parser('rmdir', help='rmdir')
+    rmdir_parser.add_argument('directory', nargs='+', default=['.'])
+    rmdir_parser.set_defaults(func=rmdir)
+
+    chmod_parser = subparsers.add_parser('chmod', help='chmod')
+    chmod_parser.add_argument('source', nargs='*', default=['.'])
+    chmod_parser.add_argument('target')
+    chmod_parser.set_defaults(func=chmod)
+
+    chown_parser = subparsers.add_parser('chown', help='chown')
+    chown_parser.add_argument('source', nargs='*', default=['.'])
+    chown_parser.add_argument('target')
+    chown_parser.set_defaults(func=chown)
+
     args = parser.parse_args()
-    print(args)
 
     try:
         ret = args.func(args)

@@ -114,7 +114,7 @@ def format_long(paths: List[Dict[str, Any]]) -> List[str]:
     for p in paths:
         dat = [
             p['mode'],
-            p['nlink'],
+            p['nlink'].ljust(2),
             p['user'].ljust(max_usr_len),
             p['group'].ljust(max_grp_len),
             p['size'].rjust(max_siz_len),
@@ -132,9 +132,10 @@ def ls_optproc(paths: List[str], opt: str = '', relbase: str = None) -> List[Dic
         if opt.find('a') < 0 and p.startswith('.'):
             continue
         relpath = p if relbase is None else os.path.join(relbase, p)
-        dat = {'path': p, 'relpath': relpath}
+        abspath = os.path.abspath(relpath)
+        dat = {'path': p, 'abspath': abspath}
         if opt.find('l') >= 0:
-            stat = os.stat(relpath)
+            stat = os.stat(abspath)
             dat['stat'] = stat
             dat['mode'] = to_rwx(stat.st_mode)
             dat['nlink'] = str(stat.st_nlink)
@@ -193,7 +194,7 @@ def find(path: str, name: str = '*') -> List[str]:
 
 
 # cp
-def cp(src: str, dst: str) -> bool:
+def cp(src: str, dst: str, opt: str = '') -> bool:
     shutil.copytree(str(src), str(dst))
     return True
 

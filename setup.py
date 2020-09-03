@@ -29,5 +29,7 @@ setup(
     scripts=[],
     install_requires=[],
     tests_require=[],
-    entry_points={}
+    entry_points={
+        'console_scripts': ['localfs = localfs.main:main']
+    }
 )
