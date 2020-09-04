@@ -1,15 +1,20 @@
 # -*- conding:utf-8 -*-
 
-import argparse
 import sys
+from argparse import ArgumentParser, Namespace
 from localfs import func
 from typing import List, Dict, Any
 
 
+#
+def print_err(s: str) -> None:
+    print(s, file=sys.stderr)
+
+
 # ls
-def ls(args: object):
+def ls(args: Namespace) -> int:
     rc = 0
-    opt = ''
+    opt = '-'
     opt += 'a' if args.a else ''
     opt += 'l' if args.l else ''
     opt += 'r' if args.r else ''
@@ -26,7 +31,7 @@ def ls(args: object):
 
 
 # find
-def find(args: object):
+def find(args: Namespace) -> int:
     rc = 0
     paths = func.find(args.path, args.name)
     for p in paths:
@@ -35,7 +40,7 @@ def find(args: object):
 
 
 # cp
-def cp(args: object):
+def cp(args: Namespace) -> int:
     rc = 0
     paths = func.find(args.path, args.name)
     for p in paths:
@@ -44,7 +49,7 @@ def cp(args: object):
 
 
 # mv
-def mv(args: object):
+def mv(args: Namespace) -> int:
     rc = 0
     paths = func.find(args.path, args.name)
     for p in paths:
@@ -53,46 +58,98 @@ def mv(args: object):
 
 
 # mkdir
-def mkdir(args: object):
+def mkdir(args: Namespace) -> int:
     rc = 0
-    opt = ''
-    opt += 'p' if args.p else ''
-    func.mkdir(args.path, args.mode, opt)
+    opt = '-p' if args.p else ''
+    for d in args.directory:
+        try:
+            func.mkdir(d, args.mode, opt)
+        except Exception as e:
+            print_err(e)
+            rc = 1
+            break
     return rc
 
 
 # touch
-def touch(args: object):
+def touch(args: Namespace) -> int:
     rc = 0
+    for f in args.file:
+        try:
+            func.touch(f, args.mode)
+        except Exception as e:
+            print_err(e)
+            rc = 1
+            break
     return rc
 
 
 # rm
-def rm(args: object):
+def rm(args: Namespace) -> int:
     rc = 0
+    opt = '-'
+    opt += 'f' if args.f else ''
+    opt += 'r' if args.r else ''
+    for f in args.file:
+        try:
+            func.rm(f, opt)
+        except Exception as e:
+            print_err(e)
+            rc = 1
+            break
     return rc
 
 
 # rmdir
-def rmdir(args: object):
+def rmdir(args: Namespace):
     rc = 0
+    for d in args.directory:
+        try:
+            func.rmdir(d)
+        except Exception as e:
+            print_err(e)
+            rc = 1
+            break
     return rc
 
 
 # chmod
-def chmod(args: object):
+def chmod(args: Namespace):
     rc = 0
+    opt = '-R' if args.R else ''
+    for f in args.file:
+        try:
+            func.chmod(f, args.mode, opt)
+        except Exception as e:
+            print_err(e)
+            rc = 1
+            break
     return rc
 
 
 # chown
-def chown(args: object):
+def chown(args: Namespace):
     rc = 0
+    opt = '-R' if args.R else ''
+    tokens = args.ownergroup.split(':')
+    if len(tokens) > 1:
+        owner = tokens[0]
+        group = tokens[1]
+    else:
+        owner = tokens[0]
+        group = None
+    for f in args.file:
+        try:
+            func.chown(f, owner, group, opt)
+        except Exception as e:
+            print_err(e)
+            rc = 1
+            break
     return rc
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Python local filesystem access library')
+    parser = ArgumentParser(description='Python local filesystem access library')
     subparsers = parser.add_subparsers()
     subparsers.required = True
 
@@ -123,12 +180,13 @@ def main():
 
     mkdir_parser = subparsers.add_parser('mkdir', help='mkdir')
     mkdir_parser.add_argument('-p', action='store_true')
-    mkdir_parser.add_argument('-m', '--mode')
-    mkdir_parser.add_argument('directory')
+    mkdir_parser.add_argument('-m', '--mode', default='755')
+    mkdir_parser.add_argument('directory', nargs='+', default=['.'])
     mkdir_parser.set_defaults(func=mkdir)
 
     touch_parser = subparsers.add_parser('touch', help='touch')
-    touch_parser.add_argument('file')
+    touch_parser.add_argument('-m', '--mode', default='644')
+    touch_parser.add_argument('file', nargs='+', default=['.'])
     touch_parser.set_defaults(func=touch)
 
     rm_parser = subparsers.add_parser('rm', help='rm')
@@ -142,13 +200,15 @@ def main():
     rmdir_parser.set_defaults(func=rmdir)
 
     chmod_parser = subparsers.add_parser('chmod', help='chmod')
-    chmod_parser.add_argument('source', nargs='*', default=['.'])
-    chmod_parser.add_argument('target')
+    chmod_parser.add_argument('-R', action='store_true')
+    chmod_parser.add_argument('mode')
+    chmod_parser.add_argument('file', nargs='+', default=['.'])
     chmod_parser.set_defaults(func=chmod)
 
     chown_parser = subparsers.add_parser('chown', help='chown')
-    chown_parser.add_argument('source', nargs='*', default=['.'])
-    chown_parser.add_argument('target')
+    chown_parser.add_argument('-R', action='store_true')
+    chown_parser.add_argument('ownergroup')
+    chown_parser.add_argument('file', nargs='+', default=['.'])
     chown_parser.set_defaults(func=chown)
 
     args = parser.parse_args()

@@ -186,6 +186,8 @@ def ls(path: str, opt: str = '') -> List[Dict[str, Any]]:
 # find
 def find(path: str, name: str = '*') -> List[str]:
     path = str(path)
+    if not os.path.exists(path):
+        raise FileNotFoundError('{}: No such file or directory'.format(path))
     paths = []
     if fnmatch.fnmatch(path, name):
         paths.extend(glob.glob(path))
@@ -211,7 +213,7 @@ def mkdir(path: str, mode: str = '755', opt: str = '') -> bool:
     if opt.find('p') >= 0:
         os.makedirs(path, mode=int(mode, 8), exist_ok=True)
     else:
-        os.mkdir(path)
+        os.mkdir(path, mode=int(mode, 8))
     return True
 
 
