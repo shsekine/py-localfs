@@ -280,8 +280,18 @@ def gzip():
     pass
 
 
+# gunzip
+def gunzip():
+    pass
+
+
 # grep
 def grep():
+    pass
+
+
+# zgrep
+def zgrep():
     pass
 
 

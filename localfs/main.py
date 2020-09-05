@@ -11,14 +11,19 @@ def print_err(s: str) -> None:
     print(s, file=sys.stderr)
 
 
+#
+def to_opt(args: Namespace, flag: str) -> str:
+    opt = '-'
+    # charactor loop
+    for f in flag:
+        opt += f if hasattr(args, f) and getattr(args, f) == True else ''
+    return opt
+
+    
 # ls
 def ls(args: Namespace) -> int:
     rc = 0
-    opt = '-'
-    opt += 'a' if args.a else ''
-    opt += 'l' if args.l else ''
-    opt += 'r' if args.r else ''
-    opt += 't' if args.t else ''
+    opt = to_opt(args, 'alrt')
     for af in args.file:
         paths = func.ls(af, opt)
         if args.l:
@@ -42,25 +47,34 @@ def find(args: Namespace) -> int:
 # cp
 def cp(args: Namespace) -> int:
     rc = 0
-    paths = func.find(args.path, args.name)
-    for p in paths:
-        print(p)
+    opt = to_opt(args, 'pr')
+    for s in args.source:
+        try:
+            func.cp(s, args.target, opt)
+        except Exception as e:
+            print_err(e)
+            rc = 1
+            break 
     return rc
 
 
 # mv
 def mv(args: Namespace) -> int:
     rc = 0
-    paths = func.find(args.path, args.name)
-    for p in paths:
-        print(p)
+    for s in args.source:
+        try:
+            func.mv(s, args.target)
+        except Exception as e:
+            print_err(e)
+            rc = 1
+            break
     return rc
 
 
 # mkdir
 def mkdir(args: Namespace) -> int:
     rc = 0
-    opt = '-p' if args.p else ''
+    opt = to_opt(args, 'p')
     for d in args.directory:
         try:
             func.mkdir(d, args.mode, opt)
@@ -87,9 +101,7 @@ def touch(args: Namespace) -> int:
 # rm
 def rm(args: Namespace) -> int:
     rc = 0
-    opt = '-'
-    opt += 'f' if args.f else ''
-    opt += 'r' if args.r else ''
+    opt = to_opt(args, 'fr')
     for f in args.file:
         try:
             func.rm(f, opt)
@@ -116,7 +128,7 @@ def rmdir(args: Namespace):
 # chmod
 def chmod(args: Namespace):
     rc = 0
-    opt = '-R' if args.R else ''
+    opt = to_opt(args, 'R')
     for f in args.file:
         try:
             func.chmod(f, args.mode, opt)
@@ -130,7 +142,7 @@ def chmod(args: Namespace):
 # chown
 def chown(args: Namespace):
     rc = 0
-    opt = '-R' if args.R else ''
+    opt = to_opt(args, 'R')
     tokens = args.ownergroup.split(':')
     if len(tokens) > 1:
         owner = tokens[0]
@@ -169,12 +181,12 @@ def main():
     cp_parser = subparsers.add_parser('cp', help='cp')
     cp_parser.add_argument('-p', action='store_true')
     cp_parser.add_argument('-r', action='store_true')
-    cp_parser.add_argument('source', nargs='*', default=['.'])
+    cp_parser.add_argument('source', nargs='+', default=['.'])
     cp_parser.add_argument('target')
     cp_parser.set_defaults(func=cp)
 
     mv_parser = subparsers.add_parser('mv', help='mv')
-    mv_parser.add_argument('source', nargs='*', default=['.'])
+    mv_parser.add_argument('source', nargs='+', default=['.'])
     mv_parser.add_argument('target')
     mv_parser.set_defaults(func=mv)
 
