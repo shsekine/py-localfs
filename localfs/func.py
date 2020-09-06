@@ -135,15 +135,15 @@ def ls_optproc(paths: List[str], opt: str = '', relbase: str = None) -> List[Dic
         abspath = os.path.abspath(relpath)
         dat = {'path': p, 'abspath': abspath}
         if opt.find('l') >= 0:
-            stat = os.stat(abspath)
-            dat['stat'] = stat
-            dat['mode'] = to_rwx(stat.st_mode)
-            dat['nlink'] = str(stat.st_nlink)
-            dat['user'] = to_user(stat.st_uid)
-            dat['group'] = to_group(stat.st_gid)
-            dat['size'] = str(stat.st_size)
-            dat['date'] = to_date_format(stat.st_mtime)
-            dat['mtime'] = stat.st_mtime
+            st = stat(abspath)
+            dat['stat'] = st
+            dat['mode'] = to_rwx(st.st_mode)
+            dat['nlink'] = str(st.st_nlink)
+            dat['user'] = to_user(st.st_uid)
+            dat['group'] = to_group(st.st_gid)
+            dat['size'] = str(st.st_size)
+            dat['date'] = to_date_format(st.st_mtime)
+            dat['mtime'] = st.st_mtime
         res.append(dat)
     if opt.find('t') >= 0:
         key = 'mtime'
