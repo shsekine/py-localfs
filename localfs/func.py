@@ -1,6 +1,7 @@
 # -*- conding:utf-8 -*-
 
 import fnmatch
+import gzip as gz
 import glob
 import grp
 import os
@@ -126,24 +127,31 @@ def format_long(paths: List[Dict[str, Any]]) -> List[str]:
 
 
 #
+def get_path_info(path: str, opt: str = '') -> Dict[str, Any]:
+    path = str(path)
+    abspath = os.path.abspath(path)
+    res = {'path': path, 'abspath': abspath}
+    if opt.find('l') >= 0:
+        st = stat(abspath)
+        res['stat'] = st
+        res['mode'] = to_rwx(st.st_mode)
+        res['nlink'] = str(st.st_nlink)
+        res['user'] = to_user(st.st_uid)
+        res['group'] = to_group(st.st_gid)
+        res['size'] = str(st.st_size)
+        res['date'] = to_date_format(st.st_mtime)
+        res['mtime'] = st.st_mtime
+    return res
+
+
+#
 def ls_optproc(paths: List[str], opt: str = '', relbase: str = None) -> List[Dict[str, Any]]:
     res = []
     for p in paths:
         if opt.find('a') < 0 and p.startswith('.'):
             continue
         relpath = p if relbase is None else os.path.join(relbase, p)
-        abspath = os.path.abspath(relpath)
-        dat = {'path': p, 'abspath': abspath}
-        if opt.find('l') >= 0:
-            st = stat(abspath)
-            dat['stat'] = st
-            dat['mode'] = to_rwx(st.st_mode)
-            dat['nlink'] = str(st.st_nlink)
-            dat['user'] = to_user(st.st_uid)
-            dat['group'] = to_group(st.st_gid)
-            dat['size'] = str(st.st_size)
-            dat['date'] = to_date_format(st.st_mtime)
-            dat['mtime'] = st.st_mtime
+        dat = get_path_info(relpath, opt)
         res.append(dat)
     if opt.find('t') >= 0:
         key = 'mtime'
@@ -261,12 +269,18 @@ def chown(path: str, user: str = None, group: str = None, opt: str = '') -> bool
 
 
 # du
-def du():
-    pass
+def du(path: str, opt: str = '') -> List[tuple]:
+    path = str(path)
+    paths = find(path) if opt.find('s') < 0 else [path]
+    res = []
+    for p in paths:
+        r = shutil.disk_usage(path)
+        res.append(r)
+    return res
 
 
 # cat
-def cat():
+def cat(path: str) -> str:
     pass
 
 
@@ -276,13 +290,29 @@ def zcat():
 
 
 # gzip
-def gzip():
-    pass
+def gzip(path: str) -> bool:
+    path = str(path)
+    if path.endswith('.gz'):
+        raise Exception('gzip: {} already has .gz suffix -- unchanged'.format(path))
+    elif not os.path.isfile(path):
+        raise FileNotFoundError('{}: No such file or directory'.format(path))
+    with open(path, 'rb') as f_in:
+        with gz.open('{}.gz'.format(path), 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+    return True
 
 
 # gunzip
-def gunzip():
-    pass
+def gunzip(path: str) -> bool:
+    path = str(path)
+    if not path.endswith('.gz'):
+        raise Exception('gunzip: {}: unknown suffix -- ignored'.format(path))
+    elif not os.path.isfile(path):
+        raise FileNotFoundError('{}: No such file or directory'.format(path))
+    with gz.open(path, 'rb') as f_in:
+        with open(re.sub(r'\.gz$', '', path), 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+    return True
 
 
 # grep

@@ -1,9 +1,8 @@
 # -*- conding:utf-8 -*-
 
 import json
-import pytest
 from localfs import api
-from os.path import exists, join, dirname
+from os.path import join, dirname
 
 
 DIR1 = join(dirname(__file__), 'dir1')

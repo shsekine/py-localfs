@@ -16,6 +16,37 @@ def scope_session():
     func.rm(DIR2, '-fr')
 
 
+def test_rwx():
+    res = func.rwx((0o700 & 0o700) >> 6, 0 & 0o4000)
+    assert res == 'rwx'
+    res = func.rwx((0o70 & 0o70) >> 3, 0 & 0o2000)
+    assert res == 'rwx'
+    res = func.rwx((0o7 & 0o7), 0 & 0o1000)
+    assert res == 'rwx'
+
+
+def test_to_rwx():
+    res = func.to_rwx(0o100777)
+    assert res == '-rwxrwxrwx'
+    res = func.to_rwx(0o040755)
+    assert res == 'drwxr-xr-x'
+
+
+def test_to_perm():
+    perm = func.to_perm(0o755)
+    assert perm == '755'
+
+
+def test_to_user():
+    user = func.to_user(0)
+    assert user == 'root'
+
+
+def test_to_group():
+    group = func.to_group(0)
+    assert group == 'wheel'
+
+
 def test_stat():
     stat = func.stat('README.md')
     assert stat is not None
@@ -27,11 +58,10 @@ def test_ls():
     assert len(paths) == 2
     paths = func.ls('tests/dir1')
     assert len(paths) == 2
-    paths = func.ls('tests/dir*', '-l')
-    print(paths)
-    fpaths = func.format_long(paths)
-    for p in fpaths:
-        print(p)
+    # paths = func.ls('tests/dir*', '-l')
+    # assert len(paths) == 2
+    # fpaths = func.format_long(paths)
+    # assert len(fpaths) == 2
 
 
 def test_find():
@@ -107,3 +137,8 @@ def test_chown():
     stat = func.stat(FILE1)
     assert func.to_user(stat.st_uid) == user
     func.rm(DIR2, '-fr')
+
+
+def test_du():
+    res = func.du(DIR1)
+    assert res is not None

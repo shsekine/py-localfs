@@ -3,7 +3,6 @@
 import sys
 from argparse import ArgumentParser, Namespace
 from localfs import func
-from typing import List, Dict, Any
 
 
 #
@@ -16,7 +15,7 @@ def to_opt(args: Namespace, flag: str) -> str:
     opt = '-'
     # charactor loop
     for f in flag:
-        opt += f if hasattr(args, f) and getattr(args, f) == True else ''
+        opt += f if hasattr(args, f) and getattr(args, f) is True else ''
     return opt
 
     
@@ -160,6 +159,36 @@ def chown(args: Namespace):
     return rc
 
 
+# du
+def du(args: Namespace):
+    rc = 0
+    return rc
+
+
+# cat
+def cat(args: Namespace):
+    rc = 0
+    return rc
+
+
+# zcat
+def zcat(args: Namespace):
+    rc = 0
+    return rc
+
+
+# gzip
+def gzip(args: Namespace):
+    rc = 0
+    return rc
+
+
+# gunzip
+def gunzip(args: Namespace):
+    rc = 0
+    return rc
+
+
 def main():
     parser = ArgumentParser(description='Python local filesystem access library')
     subparsers = parser.add_subparsers()
@@ -222,6 +251,28 @@ def main():
     chown_parser.add_argument('ownergroup')
     chown_parser.add_argument('file', nargs='+', default=['.'])
     chown_parser.set_defaults(func=chown)
+
+    du_parser = subparsers.add_parser('du', help='du')
+    du_parser.add_argument('-s', action='store_true')
+    du_parser.add_argument('-h', action='store_true')
+    du_parser.add_argument('file', nargs='+', default=['.'])
+    du_parser.set_defaults(func=du)
+
+    cat_parser = subparsers.add_parser('cat', help='cat')
+    cat_parser.add_argument('file', nargs='+', default=['.'])
+    cat_parser.set_defaults(func=cat)
+
+    zcat_parser = subparsers.add_parser('zcat', help='zcat')
+    zcat_parser.add_argument('file', nargs='+', default=['.'])
+    zcat_parser.set_defaults(func=zcat)
+
+    gzip_parser = subparsers.add_parser('gzip', help='gzip')
+    gzip_parser.add_argument('file', nargs='+', default=['.'])
+    gzip_parser.set_defaults(func=gzip)
+
+    gunzip_parser = subparsers.add_parser('gunzip', help='gunzip')
+    gunzip_parser.add_argument('file', nargs='+', default=['.'])
+    gunzip_parser.set_defaults(func=gunzip)
 
     args = parser.parse_args()
 
