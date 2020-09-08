@@ -8,11 +8,12 @@ import os
 import pwd
 import re
 import shutil
-import time
 import stat as st_stat
+import sys
+import time
 from operator import itemgetter
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, TextIO
 
 
 GLOB_PATTERN = re.compile(r'^.*[*?].*$')
@@ -280,13 +281,29 @@ def du(path: str, opt: str = '') -> List[tuple]:
 
 
 # cat
-def cat(path: str) -> str:
-    pass
+def cat(path: str, file: TextIO = sys.stdout) -> bool:
+    path = str(path)
+    if not os.path.exists(path):
+        raise FileNotFoundError('cat: {}: No such file or directory'.format(path))
+    elif os.path.isdir(path):
+        raise Exception('cat: {}: Is a directory'.format(path))
+    with open(path, encoding='utf-8') as f:
+        for line in f:
+            print(line.rstrip('\n'), file=file)
+    return True
 
 
 # zcat
-def zcat():
-    pass
+def zcat(path: str, file: TextIO = sys.stdout) -> bool:
+    path = str(path)
+    if not os.path.exists(path):
+        raise FileNotFoundError('zcat: {}: No such file or directory'.format(path))
+    elif os.path.isdir(path):
+        raise Exception('zcat: {}: Is a directory'.format(path))
+    with gz.open(path, 'rb') as f_in:
+        for line in f_in:
+            print(line.decode('utf-8').rstrip('\n'), file=file)
+    return True
 
 
 # gzip
@@ -295,10 +312,11 @@ def gzip(path: str) -> bool:
     if path.endswith('.gz'):
         raise Exception('gzip: {} already has .gz suffix -- unchanged'.format(path))
     elif not os.path.isfile(path):
-        raise FileNotFoundError('{}: No such file or directory'.format(path))
+        raise FileNotFoundError('gzip: {}: No such file or directory'.format(path))
     with open(path, 'rb') as f_in:
         with gz.open('{}.gz'.format(path), 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
+    rm(path)
     return True
 
 
@@ -308,10 +326,11 @@ def gunzip(path: str) -> bool:
     if not path.endswith('.gz'):
         raise Exception('gunzip: {}: unknown suffix -- ignored'.format(path))
     elif not os.path.isfile(path):
-        raise FileNotFoundError('{}: No such file or directory'.format(path))
+        raise FileNotFoundError('gunzip: {}: No such file or directory'.format(path))
     with gz.open(path, 'rb') as f_in:
         with open(re.sub(r'\.gz$', '', path), 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
+    rm(path)
     return True
 
 

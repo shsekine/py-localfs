@@ -168,24 +168,51 @@ def du(args: Namespace):
 # cat
 def cat(args: Namespace):
     rc = 0
+    for f in args.file:
+        try:
+            func.cat(f)
+        except Exception as e:
+            print_err(e)
+            rc = 1
+            break
     return rc
 
 
 # zcat
 def zcat(args: Namespace):
     rc = 0
+    for f in args.file:
+        try:
+            func.zcat(f)
+        except Exception as e:
+            print_err(e)
+            rc = 1
     return rc
 
 
 # gzip
 def gzip(args: Namespace):
     rc = 0
+    for f in args.file:
+        try:
+            func.gzip(f)
+        except Exception as e:
+            print_err(e)
+            rc = 1
+            break
     return rc
 
 
 # gunzip
 def gunzip(args: Namespace):
     rc = 0
+    for f in args.file:
+        try:
+            func.gunzip(f)
+        except Exception as e:
+            print_err(e)
+            rc = 1
+            break
     return rc
 
 
@@ -254,7 +281,7 @@ def main():
 
     du_parser = subparsers.add_parser('du', help='du')
     du_parser.add_argument('-s', action='store_true')
-    du_parser.add_argument('-h', action='store_true')
+    # du_parser.add_argument('-h', action='store_true')
     du_parser.add_argument('file', nargs='+', default=['.'])
     du_parser.set_defaults(func=du)
 
