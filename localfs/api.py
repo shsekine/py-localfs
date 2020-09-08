@@ -1,8 +1,7 @@
 # -*- conding:utf-8 -*-
 
 import json
-from types import SimpleNamespace
-from typing import List, Dict, Any
+from typing import List, Any
 from localfs import func
 
 

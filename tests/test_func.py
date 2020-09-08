@@ -1,6 +1,7 @@
 # -*- conding:utf-8 -*-
 
 import pytest
+from datetime import datetime
 from localfs import func
 from os.path import exists, join, dirname
 
@@ -45,6 +46,47 @@ def test_to_user():
 def test_to_group():
     group = func.to_group(0)
     assert group == 'wheel'
+
+
+def test_to_date_format():
+    ts = datetime.now().timestamp()
+    dt = func.to_date_format(ts)
+    assert dt.find(':') >= 0
+    dt = func.to_date_format(0)
+    assert dt.find(':') < 0
+
+
+def test_get_path_info():
+    inf = func.get_path_info(__file__)
+    assert 'stat' not in inf
+    inf = func.get_path_info(__file__, '-l')
+    assert 'stat' in inf
+
+
+def test_format_short():
+    inf = func.get_path_info(__file__)
+    paths = func.format_short([inf])
+    assert type(paths[0]) is str
+    assert len(paths[0].split(' ')) == 1
+
+
+def test_format_long():
+    inf = func.get_path_info(__file__, '-l')
+    paths = func.format_long([inf])
+    assert type(paths[0]) is str
+    assert len(paths[0].split(' ')) > 1
+
+
+def test_optproc_ls():
+    paths = [DIR1]
+    infs = func.optproc_ls(paths, '-l')
+    assert type(infs[0]) is dict
+
+
+def test_abspath():
+    bfr = '.'
+    aft = func.abspath(bfr)
+    assert bfr != aft
 
 
 def test_stat():

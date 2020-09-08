@@ -18,7 +18,7 @@ def to_opt(args: Namespace, flag: str) -> str:
         opt += f if hasattr(args, f) and getattr(args, f) is True else ''
     return opt
 
-    
+
 # ls
 def ls(args: Namespace) -> int:
     rc = 0
@@ -53,7 +53,7 @@ def cp(args: Namespace) -> int:
         except Exception as e:
             print_err(e)
             rc = 1
-            break 
+            break
     return rc
 
 

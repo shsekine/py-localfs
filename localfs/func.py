@@ -92,13 +92,31 @@ def to_date_format(mtime: int) -> str:
 
 
 #
+def get_path_info(path: str, opt: str = '') -> Dict[str, Any]:
+    path = str(path)
+    abspath = os.path.abspath(path)
+    inf = {'path': path, 'abspath': abspath}
+    if opt.find('l') >= 0:
+        st = stat(abspath)
+        inf['stat'] = st
+        inf['mode'] = to_rwx(st.st_mode)
+        inf['nlink'] = str(st.st_nlink)
+        inf['user'] = to_user(st.st_uid)
+        inf['group'] = to_group(st.st_gid)
+        inf['size'] = str(st.st_size)
+        inf['date'] = to_date_format(st.st_mtime)
+        inf['mtime'] = st.st_mtime
+    return inf
+
+
+#
 def format_short(paths: List[Dict[str, Any]]) -> List[str]:
     res = []
     for p in paths:
-        dat = [
+        inf = [
             p['path']
         ]
-        res.append(' '.join(dat))
+        res.append(' '.join(inf))
     return res
 
 
@@ -113,7 +131,7 @@ def format_long(paths: List[Dict[str, Any]]) -> List[str]:
         max_grp_len = max(len(p['group']), max_grp_len)
         max_siz_len = max(len(p['size']), max_siz_len)
     for p in paths:
-        dat = [
+        inf = [
             p['mode'],
             p['nlink'].ljust(2),
             p['user'].ljust(max_usr_len),
@@ -122,37 +140,19 @@ def format_long(paths: List[Dict[str, Any]]) -> List[str]:
             p['date'],
             p['path']
         ]
-        res.append(' '.join(dat))
+        res.append(' '.join(inf))
     return res
 
 
 #
-def get_path_info(path: str, opt: str = '') -> Dict[str, Any]:
-    path = str(path)
-    abspath = os.path.abspath(path)
-    res = {'path': path, 'abspath': abspath}
-    if opt.find('l') >= 0:
-        st = stat(abspath)
-        res['stat'] = st
-        res['mode'] = to_rwx(st.st_mode)
-        res['nlink'] = str(st.st_nlink)
-        res['user'] = to_user(st.st_uid)
-        res['group'] = to_group(st.st_gid)
-        res['size'] = str(st.st_size)
-        res['date'] = to_date_format(st.st_mtime)
-        res['mtime'] = st.st_mtime
-    return res
-
-
-#
-def ls_optproc(paths: List[str], opt: str = '', relbase: str = None) -> List[Dict[str, Any]]:
+def optproc_ls(paths: List[str], opt: str = '', relbase: str = None) -> List[Dict[str, Any]]:
     res = []
     for p in paths:
         if opt.find('a') < 0 and p.startswith('.'):
             continue
         relpath = p if relbase is None else os.path.join(relbase, p)
-        dat = get_path_info(relpath, opt)
-        res.append(dat)
+        inf = get_path_info(relpath, opt)
+        res.append(inf)
     if opt.find('t') >= 0:
         key = 'mtime'
         rev = opt.find('r') < 0
@@ -180,13 +180,13 @@ def ls(path: str, opt: str = '') -> List[Dict[str, Any]]:
     path = str(path)
     if GLOB_PATTERN.match(path):
         paths = glob.glob(path)
-        return ls_optproc(paths, opt)
+        return optproc_ls(paths, opt)
     elif os.path.isdir(path):
         paths = os.listdir(path)
-        return ls_optproc(paths, opt, path)
+        return optproc_ls(paths, opt, path)
     elif os.path.isfile(path):
         paths = [path]
-        return ls_optproc(paths, opt)
+        return optproc_ls(paths, opt)
     else:
         raise FileNotFoundError('{}: No such file or directory'.format(path))
 
