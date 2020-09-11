@@ -165,6 +165,25 @@ def optproc_ls(paths: List[str], opt: str = '', relbase: str = None) -> List[Dic
 
 
 #
+def analyze_path(path: str) -> List[str]:
+    if GLOB_PATTERN.match(path):
+        t_idx = 0
+        for i, c in enumerate(path):
+            if c == '*' or c == '?':
+                break
+            elif c == os.path.sep:
+                t_idx = i
+        base = path[:t_idx]
+        sub = path[t_idx:].lstrip(os.path.sep)
+    else:
+        base = path
+        sub = ''
+    base = base if base != '' else '.'
+    sub = sub if sub != '' else '*'
+    return [base, sub]
+
+
+#
 def abspath(path: str) -> str:
     path = str(path)
     return os.path.abspath(path)
@@ -192,8 +211,40 @@ def ls(path: str, opt: str = '') -> List[Dict[str, Any]]:
         raise FileNotFoundError('{}: No such file or directory'.format(path))
 
 
+# _find
+def _find(path: str, sub: str, type: str, name: str, res: List[str]) -> bool:
+    if type != 'f':
+        if name == '' or fnmatch.fnmatch(os.path.basename(path), name):
+            res.append(path)
+    if os.path.isdir(path):
+        subs = sub.split(os.path.sep)
+        pat = subs[0]
+        nxt = os.path.sep.join(subs[1:])
+        nxt = nxt if nxt != '' else '*'
+        for p in os.listdir(path):
+            if fnmatch.fnmatch(p, pat):
+                pp = os.path.join(path, p)
+                if os.path.isdir(pp):
+                    _find(pp, nxt, type, name, res)
+                elif type != 'd':
+                    if name == '' or fnmatch.fnmatch(p, name):
+                        res.append(pp)
+    return True
+
+
 # find
-def find(path: str, name: str = '*') -> List[str]:
+def find(path: str, type: str = '', name: str = '') -> List[str]:
+    path = str(path)
+    base, sub = analyze_path(path)
+    if not os.path.exists(base):
+        raise FileNotFoundError('{}: No such file or directory'.format(base))
+    res = []
+    _find(base, sub, type, name, res)
+    return res
+
+
+# legacy_find
+def legacy_find(path: str, name: str = '*') -> List[str]:
     path = str(path)
     if not os.path.exists(path):
         raise FileNotFoundError('{}: No such file or directory'.format(path))
