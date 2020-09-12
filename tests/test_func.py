@@ -56,31 +56,23 @@ def test_to_date_format():
     assert dt.find(':') < 0
 
 
-def test_get_path_info():
-    inf = func.get_path_info(__file__)
-    assert 'stat' not in inf
-    inf = func.get_path_info(__file__, '-l')
+def test_get_stat():
+    inf = func.get_stat(__file__)
     assert 'stat' in inf
 
 
 def test_format_short():
-    inf = func.get_path_info(__file__)
+    inf = func.get_stat(__file__)
     paths = func.format_short([inf])
     assert type(paths[0]) is str
     assert len(paths[0].split(' ')) == 1
 
 
 def test_format_long():
-    inf = func.get_path_info(__file__, '-l')
+    inf = func.get_stat(__file__)
     paths = func.format_long([inf])
     assert type(paths[0]) is str
     assert len(paths[0].split(' ')) > 1
-
-
-def test_optproc_ls():
-    paths = [DIR1]
-    infs = func.optproc_ls(paths, '-l')
-    assert type(infs[0]) is dict
 
 
 def test_analyze_path():
@@ -120,13 +112,12 @@ def test_stat():
 
 def test_ls():
     paths = func.ls(DIR1)
+    print(paths)
     assert len(paths) == 2
     paths = func.ls('tests/dir1')
     assert len(paths) == 2
     # paths = func.ls('tests/dir*', '-l')
     # assert len(paths) == 2
-    # fpaths = func.format_long(paths)
-    # assert len(fpaths) == 2
 
 
 def test_find():

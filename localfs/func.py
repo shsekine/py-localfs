@@ -2,7 +2,6 @@
 
 import fnmatch
 import gzip as gz
-import glob
 import grp
 import os
 import pwd
@@ -93,21 +92,19 @@ def to_date_format(mtime: int) -> str:
 
 
 #
-def get_path_info(path: str, opt: str = '') -> Dict[str, Any]:
-    path = str(path)
-    abspath = os.path.abspath(path)
-    inf = {'path': path, 'abspath': abspath}
-    if opt.find('l') >= 0:
-        st = stat(abspath)
-        inf['stat'] = st
-        inf['mode'] = to_rwx(st.st_mode)
-        inf['nlink'] = str(st.st_nlink)
-        inf['user'] = to_user(st.st_uid)
-        inf['group'] = to_group(st.st_gid)
-        inf['size'] = str(st.st_size)
-        inf['date'] = to_date_format(st.st_mtime)
-        inf['mtime'] = st.st_mtime
-    return inf
+def get_stat(path: str) -> Dict[str, Any]:
+    st = stat(path)
+    return {
+        'path': path,
+        'stat': st,
+        'mode': to_rwx(st.st_mode),
+        'nlink': str(st.st_nlink),
+        'user': to_user(st.st_uid),
+        'group': to_group(st.st_gid),
+        'size': str(st.st_size),
+        'date': to_date_format(st.st_mtime),
+        'mtime': st.st_mtime
+    }
 
 
 #
@@ -134,7 +131,7 @@ def format_long(paths: List[Dict[str, Any]]) -> List[str]:
     for p in paths:
         inf = [
             p['mode'],
-            p['nlink'].ljust(2),
+            p['nlink'].rjust(2),
             p['user'].ljust(max_usr_len),
             p['group'].ljust(max_grp_len),
             p['size'].rjust(max_siz_len),
@@ -142,25 +139,6 @@ def format_long(paths: List[Dict[str, Any]]) -> List[str]:
             p['path']
         ]
         res.append(' '.join(inf))
-    return res
-
-
-#
-def optproc_ls(paths: List[str], opt: str = '', relbase: str = None) -> List[Dict[str, Any]]:
-    res = []
-    for p in paths:
-        if opt.find('a') < 0 and p.startswith('.'):
-            continue
-        relpath = p if relbase is None else os.path.join(relbase, p)
-        inf = get_path_info(relpath, opt)
-        res.append(inf)
-    if opt.find('t') >= 0:
-        key = 'mtime'
-        rev = opt.find('r') < 0
-    else:
-        key = 'path'
-        rev = opt.find('r') >= 0
-    res = sorted(res, key=itemgetter(key), reverse=rev)
     return res
 
 
@@ -197,18 +175,28 @@ def stat(path: str) -> os.stat_result:
 
 # ls
 def ls(path: str, opt: str = '') -> List[Dict[str, Any]]:
-    path = str(path)
-    if GLOB_PATTERN.match(path):
-        paths = glob.glob(path)
-        return optproc_ls(paths, opt)
-    elif os.path.isdir(path):
-        paths = os.listdir(path)
-        return optproc_ls(paths, opt, path)
-    elif os.path.isfile(path):
-        paths = [path]
-        return optproc_ls(paths, opt)
-    else:
-        raise FileNotFoundError('{}: No such file or directory'.format(path))
+    paths = find(path, type='d')
+    res = []
+    for p in paths:
+        dir = {'path': p, 'children': []}
+        for f in os.listdir(p):
+            file = {'name': f}
+            if opt.find('a') < 0 and f.startswith('.'):
+                continue
+            file['path'] = os.path.join(p, f)
+            if opt.find('l') >= 0:
+                st = get_stat(f['path'])
+                file.update(st)
+            dir['children'].append(file)
+        if opt.find('t') >= 0:
+            k = 'mtime'
+            r = opt.find('r') < 0
+        else:
+            k = 'path'
+            r = opt.find('r') >= 0
+        dir['children'] = sorted(dir['children'], key=itemgetter(k), reverse=r)
+        res.append(dir)
+    return res
 
 
 # _find
@@ -241,18 +229,6 @@ def find(path: str, type: str = '', name: str = '') -> List[str]:
     res = []
     _find(base, sub, type, name, res)
     return res
-
-
-# legacy_find
-def legacy_find(path: str, name: str = '*') -> List[str]:
-    path = str(path)
-    if not os.path.exists(path):
-        raise FileNotFoundError('{}: No such file or directory'.format(path))
-    paths = []
-    if fnmatch.fnmatch(path, name):
-        paths.extend(glob.glob(path))
-    paths.extend(glob.glob(os.path.join(path, '**', name), recursive=True))
-    return paths
 
 
 # cp

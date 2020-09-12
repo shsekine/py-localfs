@@ -23,14 +23,21 @@ def to_opt(args: Namespace, flag: str) -> str:
 def ls(args: Namespace) -> int:
     rc = 0
     opt = to_opt(args, 'alrt')
+    dirs = []
     for af in args.file:
-        paths = func.ls(af, opt)
+        dirs.extend(func.ls(af, opt))
+    dirlen = len(dirs)
+    for i, d in enumerate(dirs):
+        if dirlen > 1:
+            print('{}:'.format(d['path']))
         if args.l:
-            dsps = func.format_long(paths)
+            lines = func.format_long(d['children'])
         else:
-            dsps = func.format_short(paths)
-        for d in dsps:
-            print(d)
+            lines = func.format_short(d['children'])
+        for line in lines:
+            print(line)
+        if dirlen > 1 and i < (dirlen - 1):
+            print('')
     return rc
 
 
