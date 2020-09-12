@@ -44,7 +44,7 @@ def ls(args: Namespace) -> int:
 # find
 def find(args: Namespace) -> int:
     rc = 0
-    paths = func.find(args.path, args.name)
+    paths = func.find(args.path, args.type, args.name)
     for p in paths:
         print(p)
     return rc
@@ -237,6 +237,7 @@ def main():
     ls_parser.set_defaults(func=ls)
 
     find_parser = subparsers.add_parser('find', help='find')
+    find_parser.add_argument('-type', nargs='?', default='')
     find_parser.add_argument('-name', nargs='?', default='*')
     find_parser.add_argument('path')
     find_parser.set_defaults(func=find)
