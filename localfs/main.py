@@ -315,7 +315,7 @@ def main():
         ret = args.func(args)
         exit(ret)
     except Exception as e:
-        print(e)
+        print_err(e)
         exit(1)
 
 

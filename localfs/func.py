@@ -143,8 +143,18 @@ def format_long(paths: List[Dict[str, Any]]) -> List[str]:
 
 
 #
-def analyze_path(path: str) -> List[str]:
-    if GLOB_PATTERN.match(path):
+def listdir(path: str) -> List[str]:
+    pass
+
+
+#
+def is_glob_path(path: str) -> bool:
+    return GLOB_PATTERN.match(path)
+
+
+#
+def split_glob_path(path: str) -> List[Any]:
+    if is_glob_path(path):
         t_idx = 0
         for i, c in enumerate(path):
             if c == '*' or c == '?':
@@ -156,8 +166,14 @@ def analyze_path(path: str) -> List[str]:
     else:
         base = path
         sub = ''
-    base = base if base != '' else '.'
-    sub = sub if sub != '' else '*'
+    return [base, sub]
+
+
+#
+def split_path(path: str) -> List[str]:
+    tokens = path.split(os.path.sep)
+    base = tokens[0]
+    sub = os.path.sep.join(tokens[1:])
     return [base, sub]
 
 
@@ -205,15 +221,12 @@ def _find(path: str, sub: str, type: str, name: str, res: List[str]) -> bool:
         if name == '' or fnmatch.fnmatch(os.path.basename(path), name):
             res.append(path)
     if os.path.isdir(path):
-        subs = sub.split(os.path.sep)
-        pat = subs[0]
-        nxt = os.path.sep.join(subs[1:])
-        nxt = nxt if nxt != '' else '*'
+        pat, next = split_path(sub)
         for p in os.listdir(path):
-            if fnmatch.fnmatch(p, pat):
+            if pat == '' or fnmatch.fnmatch(p, pat):
                 pp = os.path.join(path, p)
                 if os.path.isdir(pp):
-                    _find(pp, nxt, type, name, res)
+                    _find(pp, next, type, name, res)
                 elif type != 'd':
                     if name == '' or fnmatch.fnmatch(p, name):
                         res.append(pp)
@@ -223,8 +236,8 @@ def _find(path: str, sub: str, type: str, name: str, res: List[str]) -> bool:
 # find
 def find(path: str, type: str = '', name: str = '') -> List[str]:
     path = str(path)
-    base, sub = analyze_path(path)
-    if not os.path.exists(base):
+    base, sub = split_glob_path(path)
+    if base == '' or not os.path.exists(base):
         raise FileNotFoundError('{}: No such file or directory'.format(base))
     res = []
     _find(base, sub, type, name, res)

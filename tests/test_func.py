@@ -75,26 +75,26 @@ def test_format_long():
     assert len(paths[0].split(' ')) > 1
 
 
-def test_analyze_path():
-    path = ''
-    base, sub = func.analyze_path(path)
+def test_split_glob_path():
+    path = '.'
+    base, sub = func.split_glob_path(path)
     assert base == '.'
-    assert sub == '*'
+    assert sub == ''
     path = './test/test.txt'
-    base, sub = func.analyze_path(path)
+    base, sub = func.split_glob_path(path)
     assert base == './test/test.txt'
-    assert sub == '*'
+    assert sub == ''
     path = 'test/*'
-    base, sub = func.analyze_path(path)
+    base, sub = func.split_glob_path(path)
     assert base == 'test'
     assert sub == '*'
     path = '/aaa/bbb/c*/ddd.txt'
-    [base, sub] = func.analyze_path(path)
+    [base, sub] = func.split_glob_path(path)
     assert base == '/aaa/bbb'
     assert sub == 'c*/ddd.txt'
     path = '*'
-    [base, sub] = func.analyze_path(path)
-    assert base == '.'
+    [base, sub] = func.split_glob_path(path)
+    assert base == ''
     assert sub == '*'
 
 
