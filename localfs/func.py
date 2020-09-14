@@ -112,7 +112,7 @@ def format_short(paths: List[Dict[str, Any]]) -> List[str]:
     res = []
     for p in paths:
         inf = [
-            p['path']
+            p['name']
         ]
         res.append(' '.join(inf))
     return res
@@ -136,15 +136,10 @@ def format_long(paths: List[Dict[str, Any]]) -> List[str]:
             p['group'].ljust(max_grp_len),
             p['size'].rjust(max_siz_len),
             p['date'],
-            p['path']
+            p['name']
         ]
         res.append(' '.join(inf))
     return res
-
-
-#
-def listdir(path: str) -> List[str]:
-    pass
 
 
 #
@@ -189,21 +184,53 @@ def stat(path: str) -> os.stat_result:
     return os.stat(path)
 
 
+#
+def _ls(path: str, sub: str, opt: str, res: List[str]) -> bool:
+    pat, next = split_path(sub)
+    if os.path.isdir(path):
+        dir = {'path': path, 'children': []}
+        for p in os.listdir(path):
+            if pat != '' and not fnmatch.fnmatch(p, pat):
+                continue
+            pp = os.path.join(path, p)
+            if next != '':
+                if os.path.isdir(pp):
+                    _ls(pp, next, opt, res)
+            else:
+                if opt.find('a') < 0 and p.startswith('.'):
+                    continue
+                file = {'name': p, 'path': pp}
+                if opt.find('l') >= 0:
+                    st = get_stat(pp)
+                    file.update(st)
+                dir['children'].append(file)
+        if next == '':
+            res.append(dir)
+    elif next == '':
+        dir_name = os.path.dirname(path)
+        base_name = os.path.basename(path)
+        if opt.find('a') < 0 and base_name.startswith('.'):
+            return True
+        file = {'name': base_name, 'path': path}
+        if opt.find('l') >= 0:
+            st = get_stat(path)
+            file.update(st)
+        dir = {'path': dir_name, 'children': [file]}
+        res.append(dir)
+    return True
+
+
 # ls
 def ls(path: str, opt: str = '') -> List[Dict[str, Any]]:
-    paths = find(path, type='d')
+    path = str(path)
+    base, sub = split_glob_path(path)
+    if base == '' or not os.path.exists(base):
+        raise FileNotFoundError('{}: No such file or directory'.format(base))
+    match_dirs = []
+    _ls(base, sub, opt, match_dirs)
+
     res = []
-    for p in paths:
-        dir = {'path': p, 'children': []}
-        for f in os.listdir(p):
-            file = {'name': f}
-            if opt.find('a') < 0 and f.startswith('.'):
-                continue
-            file['path'] = os.path.join(p, f)
-            if opt.find('l') >= 0:
-                st = get_stat(f['path'])
-                file.update(st)
-            dir['children'].append(file)
+    for dir in match_dirs:
         if opt.find('t') >= 0:
             k = 'mtime'
             r = opt.find('r') < 0
@@ -223,13 +250,14 @@ def _find(path: str, sub: str, type: str, name: str, res: List[str]) -> bool:
     if os.path.isdir(path):
         pat, next = split_path(sub)
         for p in os.listdir(path):
-            if pat == '' or fnmatch.fnmatch(p, pat):
-                pp = os.path.join(path, p)
-                if os.path.isdir(pp):
-                    _find(pp, next, type, name, res)
-                elif type != 'd':
-                    if name == '' or fnmatch.fnmatch(p, name):
-                        res.append(pp)
+            if pat != '' and not fnmatch.fnmatch(p, pat):
+                continue
+            pp = os.path.join(path, p)
+            if os.path.isdir(pp):
+                _find(pp, next, type, name, res)
+            elif type != 'd':
+                if name == '' or fnmatch.fnmatch(p, name):
+                    res.append(pp)
     return True
 
 

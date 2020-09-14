@@ -26,8 +26,11 @@ def json_response(status: int, stdout: Any, stderr: Any) -> str:
 # ls
 def ls(path: str, opt: str = '') -> str:
     try:
-        paths = func.ls(path, opt)
-        return json_response(0, paths, '')
+        dirs = func.ls(path, opt)
+        files = []
+        for d in dirs:
+            files.extend(d['children'])
+        return json_response(0, files, '')
     except Exception as e:
         return json_response(1, '', e)
 

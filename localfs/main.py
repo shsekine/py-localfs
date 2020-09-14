@@ -24,8 +24,16 @@ def ls(args: Namespace) -> int:
     rc = 0
     opt = to_opt(args, 'alrt')
     dirs = []
+    distinct_dirs = {}
     for af in args.file:
-        dirs.extend(func.ls(af, opt))
+        for ld in func.ls(af, opt):
+            ldp = ld['path']
+            ldc = ld['children']
+            if ldp not in distinct_dirs:
+                dirs.append(ld)
+                distinct_dirs[ldp] = ld
+            else:
+                distinct_dirs[ldp]['children'].extend(ldc)
     dirlen = len(dirs)
     for i, d in enumerate(dirs):
         if dirlen > 1:

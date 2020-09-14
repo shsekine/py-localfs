@@ -63,6 +63,7 @@ def test_get_stat():
 
 def test_format_short():
     inf = func.get_stat(__file__)
+    inf['name'] = 'file1'
     paths = func.format_short([inf])
     assert type(paths[0]) is str
     assert len(paths[0].split(' ')) == 1
@@ -70,6 +71,7 @@ def test_format_short():
 
 def test_format_long():
     inf = func.get_stat(__file__)
+    inf['name'] = 'file1'
     paths = func.format_long([inf])
     assert type(paths[0]) is str
     assert len(paths[0].split(' ')) > 1
@@ -111,13 +113,12 @@ def test_stat():
 
 
 def test_ls():
-    paths = func.ls(DIR1)
-    print(paths)
-    assert len(paths) == 2
-    paths = func.ls('tests/dir1')
-    assert len(paths) == 2
-    # paths = func.ls('tests/dir*', '-l')
-    # assert len(paths) == 2
+    dirs = func.ls(DIR1)
+    assert len(dirs) == 1
+    assert len(dirs[0]['children']) == 2
+    # dirs = func.ls('tests/dir1*')
+    # assert len(dirs) == 1
+    # assert len(dirs[0]['children']) == 2
 
 
 def test_find():

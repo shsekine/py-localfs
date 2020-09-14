@@ -11,8 +11,8 @@ FILE1 = join(DIR2, 'file1.txt')
 
 
 def test_ls():
-    r = api.ls(DIR1)
-    assert type(r) is str
-    res = json.loads(r)
-    assert res['status'] == 0
-    assert len(res['stdout']) == 2
+    res = api.ls(DIR1)
+    assert type(res) is str
+    res_obj = json.loads(res)
+    assert res_obj['status'] == 0
+    assert len(res_obj['stdout']) == 2
