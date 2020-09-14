@@ -187,40 +187,36 @@ def stat(path: str) -> os.stat_result:
 #
 def _ls(path: str, sub: str, opt: str, res: List[str]) -> bool:
     pat, next = split_path(sub)
-    if pat == '':
-        if os.path.isdir(path):
-            dir = {'path': path, 'children': []}
-            for p in os.listdir(path):
-                if opt.find('a') < 0 and p.startswith('.'):
-                    continue
-                pp = os.path.join(path, p)
-                file = {'name': p, 'path': pp}
-                if opt.find('l') >= 0:
-                    st = get_stat(pp)
-                    file.update(st)
-                dir['children'].append(file)
-            res.append(dir)
-        else:
-            dir_name = os.path.dirname(path)
-            base_name = os.path.basename(path)
-            dir = {'path': dir_name, 'children': []}
-            if opt.find('a') < 0 and base_name.startswith('.'):
-                return True
-            file = {'name': base_name, 'path': path}
-            if opt.find('l') >= 0:
-                st = get_stat(path)
-                file.update(st)
-            dir['children'].append(file)
-            res.append(dir)
-    elif os.path.isdir(path):
+    if os.path.isdir(path):
+        dir = {'path': path, 'children': []}
         for p in os.listdir(path):
             if pat != '' and not fnmatch.fnmatch(p, pat):
                 continue
             if opt.find('a') < 0 and p.startswith('.'):
                 continue
             pp = os.path.join(path, p)
-            if os.path.isdir(pp):
+            if pat != '' and os.path.isdir(pp):
                 _ls(pp, next, opt, res)
+            else:
+                file = {'name': p, 'path': pp}
+                if opt.find('l') >= 0:
+                    st = get_stat(pp)
+                    file.update(st)
+                dir['children'].append(file)
+        if pat == '':
+            res.append(dir)
+    else:
+        dir_name = os.path.dirname(path)
+        base_name = os.path.basename(path)
+        dir = {'path': dir_name, 'children': []}
+        if opt.find('a') < 0 and base_name.startswith('.'):
+            return True
+        file = {'name': base_name, 'path': path}
+        if opt.find('l') >= 0:
+            st = get_stat(path)
+            file.update(st)
+        dir['children'].append(file)
+        res.append(dir)
     return True
 
 
