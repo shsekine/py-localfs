@@ -116,9 +116,9 @@ def test_ls():
     dirs = func.ls(DIR1)
     assert len(dirs) == 1
     assert len(dirs[0]['children']) == 2
-    # dirs = func.ls('tests/dir1*')
-    # assert len(dirs) == 1
-    # assert len(dirs[0]['children']) == 2
+    dirs = func.ls('tests/dir1*')
+    assert len(dirs) == 1
+    assert len(dirs[0]['children']) == 2
 
 
 def test_find():
