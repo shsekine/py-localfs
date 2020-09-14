@@ -58,6 +58,7 @@ def test_to_date_format():
 
 def test_get_stat():
     inf = func.get_stat(__file__)
+    assert 'path' in inf
     assert 'stat' in inf
 
 
@@ -75,6 +76,12 @@ def test_format_long():
     paths = func.format_long([inf])
     assert type(paths[0]) is str
     assert len(paths[0].split(' ')) > 1
+
+
+def test_is_glob_path():
+    assert func.is_glob_path('test/dir1') is False
+    assert func.is_glob_path('test/d?r1') is True
+    assert func.is_glob_path('test/dir*') is True
 
 
 def test_split_glob_path():
@@ -98,6 +105,12 @@ def test_split_glob_path():
     [base, sub] = func.split_glob_path(path)
     assert base == ''
     assert sub == '*'
+
+
+def test_split_path():
+    base, sub = func.split_path('aaa/bbb/ccc')
+    assert base == 'aaa'
+    assert sub == 'bbb/ccc'
 
 
 def test_abspath():
@@ -128,6 +141,16 @@ def test_find():
     assert len(paths) == 4
     for p in paths:
         func.abspath(p)
+
+
+def test_cp():
+    bk_dir = '{}.bk'.format(DIR1)
+    func.cp(DIR1, bk_dir)
+    func.rm(bk_dir, '-fr')
+
+
+def test_mv():
+    pass
 
 
 def test_mkdir():
@@ -199,3 +222,19 @@ def test_chown():
 def test_du():
     res = func.du(DIR1)
     assert res is not None
+
+
+def test_cat():
+    pass
+
+
+def test_zcat():
+    pass
+
+
+def test_gzip():
+    pass
+
+
+def test_gunzip():
+    pass

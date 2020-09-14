@@ -144,7 +144,7 @@ def format_long(paths: List[Dict[str, Any]]) -> List[str]:
 
 #
 def is_glob_path(path: str) -> bool:
-    return GLOB_PATTERN.match(path)
+    return GLOB_PATTERN.match(path) is not None
 
 
 #

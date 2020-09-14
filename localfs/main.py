@@ -36,7 +36,7 @@ def ls(args: Namespace) -> int:
                 distinct_dirs[ldp]['children'].extend(ldc)
     dirlen = len(dirs)
     for i, d in enumerate(dirs):
-        if dirlen > 1:
+        if dirlen > 1 and d['path'] != '':
             print('{}:'.format(d['path']))
         if args.l:
             lines = func.format_long(d['children'])
