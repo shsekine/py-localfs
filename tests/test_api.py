@@ -15,4 +15,4 @@ def test_ls():
     assert type(res) is str
     res_obj = json.loads(res)
     assert res_obj['status'] == 0
-    assert len(res_obj['stdout']) == 2
+    assert len(res_obj['stdout']) == 3

@@ -133,7 +133,9 @@ def format_long(paths: List[Dict[str, Any]]) -> List[str]:
             p['mode'],
             p['nlink'].rjust(2),
             p['user'].ljust(max_usr_len),
+            '',
             p['group'].ljust(max_grp_len),
+            '',
             p['size'].rjust(max_siz_len),
             p['date'],
             p['name']
@@ -176,6 +178,30 @@ def split_path(path: str) -> List[str]:
 def abspath(path: str) -> str:
     path = str(path)
     return os.path.abspath(path)
+
+
+#
+def get_size(path: str) -> int:
+    path = str(path)
+    size = 0
+    if os.path.isfile(path):
+        size = os.path.getsize(path)
+    elif os.path.isdir(path):
+        for p in os.listdir(path):
+            size += get_size(os.path.join(path, p))
+    return size
+
+
+#
+def summary_size(size: int) -> str:
+    for c in 'BKMGTP':
+        if size < 1024:
+            break
+        size = size / 1024
+    rsize = str(round(size, 1))
+    suffix = '' if c == 'B' else c
+    rsize = re.sub(r'\.0$', '', rsize)
+    return '{}{}'.format(rsize, suffix)
 
 
 # stat
@@ -340,11 +366,12 @@ def chown(path: str, user: str = None, group: str = None, opt: str = '') -> bool
 # du
 def du(path: str, opt: str = '') -> List[tuple]:
     path = str(path)
-    paths = find(path) if opt.find('s') < 0 else [path]
+    paths = find(path, type='d') if opt.find('s') < 0 else [path]
     res = []
+    size = 0
     for p in paths:
-        r = shutil.disk_usage(path)
-        res.append(r)
+        size += get_size(p)
+        res.append({'path': path, 'size': size})
     return res
 
 

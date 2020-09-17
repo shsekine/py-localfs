@@ -1,5 +1,7 @@
 # -*- conding:utf-8 -*-
 
+import io
+import os
 import pytest
 from datetime import datetime
 from localfs import func
@@ -8,7 +10,9 @@ from os.path import exists, join, dirname
 
 DIR1 = join(dirname(__file__), 'dir1')
 DIR2 = join(dirname(__file__), 'dir2')
-FILE1 = join(DIR2, 'file1.txt')
+FILE1_1 = join(DIR1, 'file1.txt')
+FILE1_2 = join(DIR1, 'file2.txt.gz')
+FILE2_1 = join(DIR2, 'file1.txt')
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -126,31 +130,44 @@ def test_stat():
 
 
 def test_ls():
+    dirs = func.ls(FILE1_1)
+    assert len(dirs) == 1
+    assert dirs[0]['children'][0]['name'] == 'file1.txt'
+    print(dirs)
     dirs = func.ls(DIR1)
     assert len(dirs) == 1
-    assert len(dirs[0]['children']) == 2
+    assert len(dirs[0]['children']) == 3
     dirs = func.ls('tests/dir1*')
     assert len(dirs) == 1
-    assert len(dirs[0]['children']) == 2
+    assert len(dirs[0]['children']) == 3
 
 
 def test_find():
     paths = func.find(DIR1)
-    assert len(paths) == 4
+    assert len(paths) == 5
     paths = func.find('tests/dir1')
-    assert len(paths) == 4
+    assert len(paths) == 5
     for p in paths:
         func.abspath(p)
 
 
 def test_cp():
-    bk_dir = '{}.bk'.format(DIR1)
-    func.cp(DIR1, bk_dir)
-    func.rm(bk_dir, '-fr')
+    dir1 = '{}.1'.format(DIR1)
+    func.cp(DIR1, dir1)
+    assert os.path.isdir(dir1) is True
+    func.rm(dir1, '-fr')
+    assert os.path.isdir(dir1) is False
 
 
 def test_mv():
-    pass
+    dir1 = '{}.1'.format(DIR1)
+    dir2 = '{}.2'.format(DIR1)
+    func.cp(DIR1, dir1)
+    func.mv(dir1, dir2)
+    assert os.path.isdir(dir1) is False
+    assert os.path.isdir(dir2) is True
+    func.rm(dir2, '-fr')
+    assert os.path.isdir(dir2) is False
 
 
 def test_mkdir():
@@ -161,17 +178,17 @@ def test_mkdir():
 
 def test_touch():
     func.mkdir(DIR2)
-    func.touch(FILE1)
-    assert exists(FILE1)
+    func.touch(FILE2_1)
+    assert exists(FILE2_1)
     func.rm(DIR2, '-r')
 
 
 def test_rm():
     func.mkdir(DIR2)
-    func.touch(FILE1)
-    assert exists(FILE1)
-    func.rm(FILE1)
-    assert not exists(FILE1)
+    func.touch(FILE2_1)
+    assert exists(FILE2_1)
+    func.rm(FILE2_1)
+    assert not exists(FILE2_1)
     with pytest.raises(Exception):
         func.rm(DIR2)
     func.rm(DIR2, '-r')
@@ -188,33 +205,33 @@ def test_rmdir():
 
 def test_chmod():
     func.mkdir(DIR2)
-    func.touch(FILE1)
-    stat = func.stat(FILE1)
+    func.touch(FILE2_1)
+    stat = func.stat(FILE2_1)
     assert func.to_perm(stat.st_mode) == '644'
     func.chmod(DIR2, '777', '-R')
     stat = func.stat(DIR2)
     assert func.to_perm(stat.st_mode) == '777'
-    stat = func.stat(FILE1)
+    stat = func.stat(FILE2_1)
     assert func.to_perm(stat.st_mode) == '777'
-    func.chmod(FILE1, '644')
-    stat = func.stat(FILE1)
+    func.chmod(FILE2_1, '644')
+    stat = func.stat(FILE2_1)
     assert func.to_perm(stat.st_mode) == '644'
     func.rm(DIR2, '-fr')
 
 
 def test_chown():
     func.mkdir(DIR2)
-    func.touch(FILE1)
-    stat = func.stat(FILE1)
+    func.touch(FILE2_1)
+    stat = func.stat(FILE2_1)
     user = func.to_user(stat.st_uid)
     assert func.to_user(stat.st_uid) == user
     func.chown(DIR2, user=user, opt='-R')
     stat = func.stat(DIR2)
     assert func.to_user(stat.st_uid) == user
-    stat = func.stat(FILE1)
+    stat = func.stat(FILE2_1)
     assert func.to_user(stat.st_uid) == user
-    func.chown(FILE1, user=user)
-    stat = func.stat(FILE1)
+    func.chown(FILE2_1, user=user)
+    stat = func.stat(FILE2_1)
     assert func.to_user(stat.st_uid) == user
     func.rm(DIR2, '-fr')
 
@@ -225,11 +242,17 @@ def test_du():
 
 
 def test_cat():
-    pass
+    out = io.StringIO()
+    func.cat(FILE1_1, out)
+    contents = out.getvalue()
+    assert contents.find('hello') >= 0
 
 
 def test_zcat():
-    pass
+    out = io.StringIO()
+    func.zcat(FILE1_2, out)
+    contents = out.getvalue()
+    assert contents.find('hello') >= 0
 
 
 def test_gzip():

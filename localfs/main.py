@@ -177,6 +177,20 @@ def chown(args: Namespace):
 # du
 def du(args: Namespace):
     rc = 0
+    opt = to_opt(args, 'sh')
+    for f in args.file:
+        try:
+            res = func.du(f, opt)
+            for r in res:
+                if opt.find('h') >= 0:
+                    size = func.summary_size(r['size'])
+                else:
+                    size = r['size']
+                print('{}\t{}'.format(size, r['path']))
+        except Exception as e:
+            print_err(e)
+            rc = 1
+            break
     return rc
 
 
@@ -295,9 +309,9 @@ def main():
     chown_parser.add_argument('file', nargs='+', default=['.'])
     chown_parser.set_defaults(func=chown)
 
-    du_parser = subparsers.add_parser('du', help='du')
+    du_parser = subparsers.add_parser('du', add_help=False)
     du_parser.add_argument('-s', action='store_true')
-    # du_parser.add_argument('-h', action='store_true')
+    du_parser.add_argument('-h', action='store_true')
     du_parser.add_argument('file', nargs='+', default=['.'])
     du_parser.set_defaults(func=du)
 
