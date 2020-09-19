@@ -432,15 +432,15 @@ def gunzip(path: str) -> bool:
 
 
 # grep
-def grep():
-    pass
+def grep(path: str, pattern: str, file: TextIO = sys.stdout) -> bool:
+    return True
 
 
 # zgrep
-def zgrep():
-    pass
+def zgrep(path: str, pattern: str, file: TextIO = sys.stdout) -> bool:
+    return True
 
 
 # sed
 def sed():
-    pass
+    return True

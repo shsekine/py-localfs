@@ -364,3 +364,15 @@ def test_gunzip():
     with pytest.raises(FileNotFoundError):
         func.gunzip('NoSuchFile')
     func.rm(DIR2, '-fr')
+
+
+def test_grep():
+    assert func.grep(FILE1_1, 'test') is True
+
+
+def test_zgrep():
+    assert func.zgrep(FILE1_1, 'test') is True
+
+
+def test_sed():
+    assert func.sed() is True
