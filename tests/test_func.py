@@ -12,12 +12,14 @@ DIR1 = join(dirname(__file__), 'dir1')
 DIR2 = join(dirname(__file__), 'dir2')
 FILE1_1 = join(DIR1, 'file1.txt')
 FILE1_2 = join(DIR1, 'file2.txt.gz')
+FILE1_3 = join(DIR1, '.hidden.txt')
 FILE2_1 = join(DIR2, 'file1.txt')
 
 
 @pytest.fixture(scope='session', autouse=True)
 def scope_session():
     yield
+    # DIR2 is temprorary so clean it
     func.rm(DIR2, '-fr')
 
 
@@ -28,6 +30,10 @@ def test_rwx():
     assert res == 'rwx'
     res = func.rwx((0o7 & 0o7), 0 & 0o1000)
     assert res == 'rwx'
+    res = func.rwx((0o7 & 0o7), 0o1000 & 0o1000)
+    assert res == 'rws'
+    res = func.rwx((0o7 & 0o7), 0o1000 & 0o1000, True)
+    assert res == 'rwt'
 
 
 def test_to_rwx():
@@ -35,6 +41,18 @@ def test_to_rwx():
     assert res == '-rwxrwxrwx'
     res = func.to_rwx(0o040755)
     assert res == 'drwxr-xr-x'
+    res = func.to_rwx(0o010755)
+    assert res == 'prwxr-xr-x'
+    res = func.to_rwx(0o020755)
+    assert res == 'crwxr-xr-x'
+    res = func.to_rwx(0o060755)
+    assert res == 'brwxr-xr-x'
+    res = func.to_rwx(0o120755)
+    assert res == 'lrwxr-xr-x'
+    res = func.to_rwx(0o140755)
+    assert res == 'srwxr-xr-x'
+    res = func.to_rwx(0o150755)
+    assert res == '?rwxr-xr-x'
 
 
 def test_to_perm():
@@ -45,11 +63,15 @@ def test_to_perm():
 def test_to_user():
     user = func.to_user(0)
     assert user == 'root'
+    user = func.to_user(-1)
+    assert user == '-1'
 
 
 def test_to_group():
     group = func.to_group(0)
     assert group == 'wheel'
+    group = func.to_group(12345)
+    assert group == '12345'
 
 
 def test_to_date_format():
@@ -58,6 +80,8 @@ def test_to_date_format():
     assert dt.find(':') >= 0
     dt = func.to_date_format(0)
     assert dt.find(':') < 0
+    dt = func.to_date_format(None)
+    assert dt == '(unknown date)'
 
 
 def test_get_stat():
@@ -129,26 +153,55 @@ def test_stat():
     assert func.to_perm(stat.st_mode) == '644'
 
 
+def test_get_size():
+    assert func.get_size(DIR1) > 0
+
+
+def test_readable_size():
+    assert func.readable_size(536870912) == '512M'
+
+
 def test_ls():
+    # file
     dirs = func.ls(FILE1_1)
     assert len(dirs) == 1
     assert dirs[0]['children'][0]['name'] == 'file1.txt'
-    print(dirs)
+    # file with option
+    dirs = func.ls(FILE1_1, '-ltra')
+    assert len(dirs) == 1
+    assert len(dirs[0]['children']) == 1
+    # hidden file
+    dirs = func.ls(FILE1_3, '-ltr')
+    assert len(dirs) == 0
+    # dir
     dirs = func.ls(DIR1)
     assert len(dirs) == 1
     assert len(dirs[0]['children']) == 3
+    # dir with option
+    dirs = func.ls(DIR1, '-l')
+    assert len(dirs) == 1
+    assert len(dirs[0]['children']) == 3
+    # glob
     dirs = func.ls('tests/dir1*')
     assert len(dirs) == 1
     assert len(dirs[0]['children']) == 3
+    # no such file or directory
+    with pytest.raises(FileNotFoundError):
+        func.ls('NoSuchDir')
 
 
 def test_find():
+    # dir
     paths = func.find(DIR1)
-    assert len(paths) == 5
-    paths = func.find('tests/dir1')
-    assert len(paths) == 5
+    assert len(paths) == 6
+    # dir with name
+    # paths = func.find('tests/dir*')
+    # assert len(paths) == 6
     for p in paths:
         func.abspath(p)
+    # no such file or directory
+    with pytest.raises(FileNotFoundError):
+        func.find('NoSuchDir')
 
 
 def test_cp():
@@ -173,6 +226,11 @@ def test_mv():
 def test_mkdir():
     func.mkdir(DIR2)
     assert exists(DIR2)
+    # already exists
+    with pytest.raises(Exception):
+        func.mkdir(DIR2)
+    # force mkdir
+    func.mkdir(DIR2, '-p')
     func.rmdir(DIR2)
 
 
@@ -246,6 +304,12 @@ def test_cat():
     func.cat(FILE1_1, out)
     contents = out.getvalue()
     assert contents.find('hello') >= 0
+    # no such file or directory
+    with pytest.raises(FileNotFoundError):
+        func.cat('NoSuchDir')
+    # path is directory
+    with pytest.raises(Exception):
+        func.cat(DIR1)
 
 
 def test_zcat():
@@ -253,11 +317,40 @@ def test_zcat():
     func.zcat(FILE1_2, out)
     contents = out.getvalue()
     assert contents.find('hello') >= 0
+    # no such file or directory
+    with pytest.raises(FileNotFoundError):
+        func.zcat('NoSuchDir')
+    # path is directory
+    with pytest.raises(Exception):
+        func.zcat(DIR1)
 
 
 def test_gzip():
-    pass
+    func.mkdir(DIR2)
+    func.touch(FILE2_1)
+    func.gzip(FILE2_1)
+    assert not os.path.exists(FILE2_1)
+    assert os.path.exists(FILE2_1 + '.gz')
+    # already gz
+    with pytest.raises(Exception):
+        func.gzip(FILE2_1 + '.gz')
+    # no such file or directory
+    with pytest.raises(FileNotFoundError):
+        func.gzip('NoSuchFile')
+    func.rm(DIR2, '-fr')
 
 
 def test_gunzip():
-    pass
+    func.mkdir(DIR2)
+    func.touch(FILE2_1)
+    func.gzip(FILE2_1)
+    func.gunzip(FILE2_1 + '.gz')
+    assert os.path.exists(FILE2_1)
+    assert not os.path.exists(FILE2_1 + '.gz')
+    # not gz
+    with pytest.raises(Exception):
+        func.gunzip(FILE2_1)
+    # no such file or directory
+    with pytest.raises(FileNotFoundError):
+        func.gunzip('NoSuchFile')
+    func.rm(DIR2, '-fr')

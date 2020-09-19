@@ -183,7 +183,7 @@ def du(args: Namespace):
             res = func.du(f, opt)
             for r in res:
                 if opt.find('h') >= 0:
-                    size = func.summary_size(r['size'])
+                    size = func.readable_size(r['size'])
                 else:
                     size = r['size']
                 print('{}\t{}'.format(size, r['path']))

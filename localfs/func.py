@@ -193,7 +193,7 @@ def get_size(path: str) -> int:
 
 
 #
-def summary_size(size: int) -> str:
+def readable_size(size: int) -> str:
     for c in 'BKMGTP':
         if size < 1024:
             break
@@ -255,6 +255,7 @@ def ls(path: str, opt: str = '') -> List[Dict[str, Any]]:
     match_dirs = []
     _ls(base, sub, opt, match_dirs)
 
+    # sort process
     res = []
     for dir in match_dirs:
         if opt.find('t') >= 0:
@@ -311,7 +312,7 @@ def mv(src: str, dst: str) -> bool:
 
 
 # mkdir
-def mkdir(path: str, mode: str = '755', opt: str = '') -> bool:
+def mkdir(path: str, opt: str = '', mode: str = '755') -> bool:
     path = str(path)
     if opt.find('p') >= 0:
         os.makedirs(path, mode=int(mode, 8), exist_ok=True)
@@ -404,10 +405,10 @@ def zcat(path: str, file: TextIO = sys.stdout) -> bool:
 # gzip
 def gzip(path: str) -> bool:
     path = str(path)
-    if path.endswith('.gz'):
-        raise Exception('gzip: {} already has .gz suffix -- unchanged'.format(path))
-    elif not os.path.isfile(path):
+    if not os.path.isfile(path):
         raise FileNotFoundError('gzip: {}: No such file or directory'.format(path))
+    elif path.endswith('.gz'):
+        raise Exception('gzip: {} already has .gz suffix -- unchanged'.format(path))
     with open(path, 'rb') as f_in:
         with gz.open('{}.gz'.format(path), 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
@@ -418,10 +419,10 @@ def gzip(path: str) -> bool:
 # gunzip
 def gunzip(path: str) -> bool:
     path = str(path)
-    if not path.endswith('.gz'):
-        raise Exception('gunzip: {}: unknown suffix -- ignored'.format(path))
-    elif not os.path.isfile(path):
+    if not os.path.isfile(path):
         raise FileNotFoundError('gunzip: {}: No such file or directory'.format(path))
+    elif not path.endswith('.gz'):
+        raise Exception('gunzip: {}: unknown suffix -- ignored'.format(path))
     with gz.open(path, 'rb') as f_in:
         with open(re.sub(r'\.gz$', '', path), 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
