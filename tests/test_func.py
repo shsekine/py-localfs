@@ -194,11 +194,21 @@ def test_find():
     # dir
     paths = func.find(DIR1)
     assert len(paths) == 6
-    # dir with name
-    # paths = func.find('tests/dir*')
-    # assert len(paths) == 6
-    for p in paths:
-        func.abspath(p)
+    # glob dir
+    paths = func.find('tests/dir*')
+    assert len(paths) == 6
+    # dir with file type
+    paths = func.find(DIR1, type='f')
+    assert len(paths) == 4
+    # dir with directory type
+    paths = func.find(DIR1, type='d')
+    assert len(paths) == 2
+    # dir with name *file1*
+    paths = func.find(DIR1, name='*file1*')
+    assert len(paths) == 2
+    # file
+    paths = func.find(FILE1_1)
+    assert len(paths) == 1
     # no such file or directory
     with pytest.raises(FileNotFoundError):
         func.find('NoSuchDir')

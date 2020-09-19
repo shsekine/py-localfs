@@ -273,7 +273,8 @@ def ls(path: str, opt: str = '') -> List[Dict[str, Any]]:
 def _find(path: str, sub: str, type: str, name: str, res: List[str]) -> bool:
     if type != 'f':
         if name == '' or fnmatch.fnmatch(os.path.basename(path), name):
-            res.append(path)
+            if sub == '':
+                res.append(path)
     if os.path.isdir(path):
         pat, next = split_path(sub)
         for p in os.listdir(path):
