@@ -352,7 +352,7 @@ def chmod(path: str, mode: str, opt: str = '') -> bool:
     path = str(path)
     paths = find(path) if opt.find('R') >= 0 else [path]
     for p in paths:
-        os.chmod(str(p), int(mode, 8))
+        os.chmod(p, int(mode, 8))
     return True
 
 

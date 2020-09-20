@@ -215,22 +215,24 @@ def test_find():
 
 
 def test_cp():
-    dir1 = '{}.1'.format(DIR1)
-    func.cp(DIR1, dir1)
-    assert os.path.isdir(dir1) is True
-    func.rm(dir1, '-fr')
-    assert os.path.isdir(dir1) is False
+    target = '{}.1'.format(DIR1)
+    func.cp(DIR1, target)
+    assert os.path.isdir(target) is True
+    # clean up
+    func.rm(target, '-fr')
+    assert os.path.isdir(target) is False
 
 
 def test_mv():
-    dir1 = '{}.1'.format(DIR1)
-    dir2 = '{}.2'.format(DIR1)
-    func.cp(DIR1, dir1)
-    func.mv(dir1, dir2)
-    assert os.path.isdir(dir1) is False
-    assert os.path.isdir(dir2) is True
-    func.rm(dir2, '-fr')
-    assert os.path.isdir(dir2) is False
+    target1 = '{}.1'.format(DIR1)
+    target2 = '{}.2'.format(DIR1)
+    func.cp(DIR1, target1)
+    func.mv(target1, target2)
+    assert os.path.isdir(target1) is False
+    assert os.path.isdir(target2) is True
+    # clean up
+    func.rm(target2, '-fr')
+    assert os.path.isdir(target2) is False
 
 
 def test_mkdir():
@@ -241,6 +243,7 @@ def test_mkdir():
         func.mkdir(DIR2)
     # force mkdir
     func.mkdir(DIR2, '-p')
+    # clean up
     func.rmdir(DIR2)
 
 
