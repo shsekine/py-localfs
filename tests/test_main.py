@@ -2,7 +2,7 @@
 
 import pytest
 from argparse import Namespace
-from localfs import main
+from localfs import main, func
 from os.path import exists, join, dirname
 
 
@@ -181,10 +181,33 @@ def test_chmod(mocker):
 
 def test_chown(mocker):
     _quiet(mocker)
+    ret = main.mkdir(Namespace(directory=[DIR2], mode='755', p=False))
+    ret = main.touch(Namespace(file=[FILE2_1], mode='644'))
+    st = func.get_stat(FILE2_1)
+    og = '{}:{}'.format(st['user'], st['group'])
+    ret = main.chown(Namespace(file=[FILE2_1], ownergroup=og, R=False))
+    assert ret == 0
+    # owner only
+    og = '{}'.format(st['user'])
+    ret = main.chown(Namespace(file=[FILE2_1], ownergroup=og, R=False))
+    assert ret == 0
+    # no such file
+    ret = main.chown(Namespace(file=['NoSuchFile'], ownergroup=og, R=False))
+    assert ret == 1
+    # clean up
+    ret = main.rm(Namespace(file=[DIR2], f=True, r=True))
+    assert ret == 0
 
 
 def test_du(mocker):
     _quiet(mocker)
+    ret = main.du(Namespace(file=[DIR1], s=True, h=True))
+    assert ret == 0
+    ret = main.du(Namespace(file=[DIR1], s=True, h=False))
+    assert ret == 0
+    # no such file
+    ret = main.du(Namespace(file=['NoSuchFile'], s=True, R=True))
+    assert ret == 1
 
 
 def test_cat(mocker):

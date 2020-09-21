@@ -184,6 +184,8 @@ def abspath(path: str) -> str:
 def get_size(path: str) -> int:
     path = str(path)
     size = 0
+    if not os.path.exists(path):
+        raise FileNotFoundError('{}: No such file or directory'.format(path))
     if os.path.isfile(path):
         size = os.path.getsize(path)
     elif os.path.isdir(path):

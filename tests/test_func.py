@@ -155,6 +155,8 @@ def test_stat():
 
 def test_get_size():
     assert func.get_size(DIR1) > 0
+    with pytest.raises(FileNotFoundError):
+        func.get_size('NoSuchFile')
 
 
 def test_readable_size():
