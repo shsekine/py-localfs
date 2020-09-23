@@ -6,16 +6,6 @@ from localfs import func
 
 
 #
-def print_out(s: str) -> None:
-    print(s, file=sys.stdout)
-
-
-#
-def print_err(s: str) -> None:
-    print(s, file=sys.stderr)
-
-
-#
 def to_opt(args: Namespace, flag: str) -> str:
     opt = '-'
     # charactor loop
@@ -42,15 +32,15 @@ def ls(args: Namespace) -> int:
     dirlen = len(dirs)
     for i, d in enumerate(dirs):
         if dirlen > 1 and d['path'] != '':
-            print_out('{}:'.format(d['path']))
+            func.print_out('{}:'.format(d['path']))
         if args.l:
             lines = func.format_long(d['children'])
         else:
             lines = func.format_short(d['children'])
         for line in lines:
-            print_out(line)
+            func.print_out(line)
         if dirlen > 1 and i < (dirlen - 1):
-            print_out('')
+            func.print_out('')
     return rc
 
 
@@ -59,7 +49,7 @@ def find(args: Namespace) -> int:
     rc = 0
     paths = func.find(args.path, args.type, args.name)
     for p in paths:
-        print_out(p)
+        func.print_out(p)
     return rc
 
 
@@ -71,7 +61,7 @@ def cp(args: Namespace) -> int:
         try:
             func.cp(s, args.target, opt)
         except Exception as e:
-            print_err(e)
+            func.print_err(e)
             rc = 1
             break
     return rc
@@ -84,7 +74,7 @@ def mv(args: Namespace) -> int:
         try:
             func.mv(s, args.target)
         except Exception as e:
-            print_err(e)
+            func.print_err(e)
             rc = 1
             break
     return rc
@@ -98,7 +88,7 @@ def mkdir(args: Namespace) -> int:
         try:
             func.mkdir(d, opt, args.mode)
         except Exception as e:
-            print_err(e)
+            func.print_err(e)
             rc = 1
             break
     return rc
@@ -111,7 +101,7 @@ def touch(args: Namespace) -> int:
         try:
             func.touch(f, args.mode)
         except Exception as e:
-            print_err(e)
+            func.print_err(e)
             rc = 1
             break
     return rc
@@ -125,7 +115,7 @@ def rm(args: Namespace) -> int:
         try:
             func.rm(f, opt)
         except Exception as e:
-            print_err(e)
+            func.print_err(e)
             rc = 1
             break
     return rc
@@ -138,7 +128,7 @@ def rmdir(args: Namespace):
         try:
             func.rmdir(d)
         except Exception as e:
-            print_err(e)
+            func.print_err(e)
             rc = 1
             break
     return rc
@@ -152,7 +142,7 @@ def chmod(args: Namespace):
         try:
             func.chmod(f, args.mode, opt)
         except Exception as e:
-            print_err(e)
+            func.print_err(e)
             rc = 1
             break
     return rc
@@ -173,7 +163,7 @@ def chown(args: Namespace):
         try:
             func.chown(f, owner, group, opt)
         except Exception as e:
-            print_err(e)
+            func.print_err(e)
             rc = 1
             break
     return rc
@@ -191,9 +181,9 @@ def du(args: Namespace):
                     size = func.readable_size(r['size'])
                 else:
                     size = r['size']
-                print_out('{}\t{}'.format(size, r['path']))
+                func.print_out('{}\t{}'.format(size, r['path']))
         except Exception as e:
-            print_err(e)
+            func.print_err(e)
             rc = 1
             break
     return rc
@@ -206,7 +196,7 @@ def cat(args: Namespace):
         try:
             func.cat(f)
         except Exception as e:
-            print_err(e)
+            func.print_err(e)
             rc = 1
             break
     return rc
@@ -219,7 +209,7 @@ def zcat(args: Namespace):
         try:
             func.zcat(f)
         except Exception as e:
-            print_err(e)
+            func.print_err(e)
             rc = 1
     return rc
 
@@ -231,7 +221,7 @@ def gzip(args: Namespace):
         try:
             func.gzip(f)
         except Exception as e:
-            print_err(e)
+            func.print_err(e)
             rc = 1
             break
     return rc
@@ -244,7 +234,7 @@ def gunzip(args: Namespace):
         try:
             func.gunzip(f)
         except Exception as e:
-            print_err(e)
+            func.print_err(e)
             rc = 1
             break
     return rc
@@ -350,7 +340,7 @@ def main():
         ret = args.func(args)
         return ret
     except Exception as e:
-        print_err(e)
+        func.print_err(e)
         return 1
 
 

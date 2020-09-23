@@ -19,6 +19,16 @@ GLOB_PATTERN = re.compile(r'^.*[*?].*$')
 
 
 #
+def print_out(s: str, file: TextIO = sys.stdout) -> None:
+    print(s, file=file)
+
+
+#
+def print_err(s: str, file: TextIO = sys.stderr) -> None:
+    print(s, file=file)
+
+
+#
 def rwx(n: int, suid: int, sticky: bool = False) -> str:
     if suid > 0:
         suid = 2
@@ -388,7 +398,7 @@ def cat(path: str, file: TextIO = sys.stdout) -> bool:
         raise Exception('cat: {}: Is a directory'.format(path))
     with open(path, encoding='utf-8') as f:
         for line in f:
-            print(line.rstrip('\n'), file=file)
+            print_out(line.rstrip('\n'), file=file)
     return True
 
 
@@ -401,7 +411,7 @@ def zcat(path: str, file: TextIO = sys.stdout) -> bool:
         raise Exception('zcat: {}: Is a directory'.format(path))
     with gz.open(path, 'rb') as f_in:
         for line in f_in:
-            print(line.decode('utf-8').rstrip('\n'), file=file)
+            print_out(line.decode('utf-8').rstrip('\n'), file=file)
     return True
 
 

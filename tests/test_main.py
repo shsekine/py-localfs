@@ -23,8 +23,8 @@ def scope_session():
 
 
 def _quiet(mocker):
-    mocker.patch('localfs.main.print_out')
-    mocker.patch('localfs.main.print_err')
+    mocker.patch('localfs.func.print_out')
+    mocker.patch('localfs.func.print_err')
 
 
 def _dummy(*args, **kwargs) -> bool:
@@ -32,12 +32,12 @@ def _dummy(*args, **kwargs) -> bool:
 
 
 def test_print_out():
-    main.print_out('')
+    func.print_out('')
     assert True
 
 
 def test_print_err():
-    main.print_err('')
+    func.print_err('')
     assert True
 
 
@@ -156,7 +156,7 @@ def _print_out(s: str) -> None:
 def test_chmod(mocker):
     _quiet(mocker)
     global BUFFER
-    po = mocker.patch('localfs.main.print_out')
+    po = mocker.patch('localfs.func.print_out')
     po.side_effect = _print_out
     ret = main.mkdir(Namespace(directory=[DIR2], mode='755', p=False))
     ret = main.touch(Namespace(file=[FILE2_1], mode='644'))
@@ -212,6 +212,9 @@ def test_du(mocker):
 
 def test_cat(mocker):
     _quiet(mocker)
+    global BUFFER
+    po = mocker.patch('localfs.func.print_out')
+    po.side_effect = _print_out
 
 
 def test_zcat(mocker):
