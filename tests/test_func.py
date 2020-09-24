@@ -23,6 +23,16 @@ def scope_session():
     func.rm(DIR2, '-fr')
 
 
+def test_print_out():
+    func.print_out('')
+    assert True
+
+
+def test_print_err():
+    func.print_err('')
+    assert True
+
+
 def test_rwx():
     res = func.rwx((0o700 & 0o700) >> 6, 0 & 0o4000)
     assert res == 'rwx'

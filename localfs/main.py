@@ -28,6 +28,7 @@ def ls(args: Namespace) -> int:
                 dirs.append(ld)
                 distinct_dirs[ldp] = ld
             else:
+                # merge children in the same directory
                 distinct_dirs[ldp]['children'].extend(ldc)
     dirlen = len(dirs)
     for i, d in enumerate(dirs):
@@ -242,7 +243,8 @@ def gunzip(args: Namespace):
 
 # nop
 def nop(args: Namespace):
-    pass
+    rc = 0
+    return rc
 
 
 def main():

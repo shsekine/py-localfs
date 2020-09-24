@@ -4,11 +4,13 @@ import pytest
 from argparse import Namespace
 from localfs import main, func
 from os.path import exists, join, dirname
+from typing import TextIO
 
 
 DIR1 = join(dirname(__file__), 'dir1')
 DIR2 = join(dirname(__file__), 'dir2')
 DIR3 = join(dirname(__file__), 'dir3')
+SUBDIR1 = join(DIR1, 'subdir1')
 FILE1_1 = join(DIR1, 'file1.txt')
 FILE1_2 = join(DIR1, 'file2.txt.gz')
 FILE1_3 = join(DIR1, '.hidden.txt')
@@ -31,14 +33,9 @@ def _dummy(*args, **kwargs) -> bool:
     return 0
 
 
-def test_print_out():
-    func.print_out('')
-    assert True
-
-
-def test_print_err():
-    func.print_err('')
-    assert True
+def _print_out(s: str, file: TextIO = None) -> None:
+    global BUFFER
+    BUFFER.append(s)
 
 
 def test_to_opt():
@@ -52,6 +49,10 @@ def test_to_opt():
 def test_ls(mocker):
     _quiet(mocker)
     ret = main.ls(Namespace(file=[DIR1], l=False, a=False, t=False, r=False))
+    assert ret == 0
+    ret = main.ls(Namespace(file=[DIR1, SUBDIR1], l=False, a=False, t=False, r=False))
+    assert ret == 0
+    ret = main.ls(Namespace(file=[DIR1, DIR1], l=False, a=False, t=False, r=False))
     assert ret == 0
 
 
@@ -148,11 +149,6 @@ def test_rmdir(mocker):
     assert ret == 1
 
 
-def _print_out(s: str) -> None:
-    global BUFFER
-    BUFFER.append(s)
-
-
 def test_chmod(mocker):
     _quiet(mocker)
     global BUFFER
@@ -215,22 +211,65 @@ def test_cat(mocker):
     global BUFFER
     po = mocker.patch('localfs.func.print_out')
     po.side_effect = _print_out
+    BUFFER = []
+    ret = main.cat(Namespace(file=[FILE1_1]))
+    assert BUFFER[0].find('hello') >= 0
+    assert ret == 0
+    # no such file
+    ret = main.cat(Namespace(file=['NoSuchFile']))
+    assert ret == 1
 
 
 def test_zcat(mocker):
     _quiet(mocker)
+    global BUFFER
+    po = mocker.patch('localfs.func.print_out')
+    po.side_effect = _print_out
+    BUFFER = []
+    ret = main.zcat(Namespace(file=[FILE1_2]))
+    assert BUFFER[0].find('hello') >= 0
+    assert ret == 0
+    # no such file
+    ret = main.zcat(Namespace(file=['NoSuchFile']))
+    assert ret == 1
 
 
 def test_gzip(mocker):
     _quiet(mocker)
+    ret = main.mkdir(Namespace(directory=[DIR2], mode='755', p=False))
+    ret = main.touch(Namespace(file=[FILE2_1], mode='644'))
+    ret = main.gzip(Namespace(file=[FILE2_1]))
+    assert exists(FILE2_1 + '.gz') is True
+    assert ret == 0
+    # no such file
+    ret = main.gzip(Namespace(file=['NoSuchFile']))
+    assert ret == 1
+    # clean up
+    ret = main.rm(Namespace(file=[DIR2], f=True, r=True))
+    assert ret == 0
 
 
 def test_gunzip(mocker):
     _quiet(mocker)
+    ret = main.mkdir(Namespace(directory=[DIR2], mode='755', p=False))
+    ret = main.touch(Namespace(file=[FILE2_1], mode='644'))
+    ret = main.gzip(Namespace(file=[FILE2_1]))
+    assert exists(FILE2_1) is False
+    ret = main.gunzip(Namespace(file=[FILE2_1 + '.gz']))
+    assert exists(FILE2_1) is True
+    assert ret == 0
+    # no such file
+    ret = main.gunzip(Namespace(file=['NoSuchFile']))
+    assert ret == 1
+    # clean up
+    ret = main.rm(Namespace(file=[DIR2], f=True, r=True))
+    assert ret == 0
 
 
 def test_nop(mocker):
     _quiet(mocker)
+    ret = main.nop(Namespace())
+    assert ret == 0
 
 
 def test_main(mocker):
