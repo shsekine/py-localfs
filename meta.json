@@ -1,0 +1,8 @@
+{
+    "name": "localfs",
+    "description": "Python local filesystem access library",
+    "version": "0.0.1",
+    "author": "shsekine",
+    "author_email": "shsekine@localhost",
+    "url": "https://github.com/shsekine/py-localfs"
+}
